@@ -64,10 +64,12 @@ public final class NotifHistory {
         loaded = true;
         File f = file(app);
         if (!f.exists()) return;
+        if (f.length() > 8L * 1024 * 1024) { f.delete(); return; } // runaway file from older versions: start fresh
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
             String line;
             while ((line = br.readLine()) != null) {
+                if (line.length() > 20000) continue;
                 String[] p = line.split("\t", -1);
                 if (p.length < 5) continue;
                 Entry e = new Entry();
@@ -79,9 +81,11 @@ public final class NotifHistory {
                 entries.add(e);
             }
             br.close();
-        } catch (Exception ignored) { }
+        } catch (Throwable ignored) { entries.clear(); f.delete(); }
         prune();
     }
+
+    private static String cap(String s, int n) { return s == null ? "" : s.length() > n ? s.substring(0, n) : s; }
 
     private static String esc(String s) { return s == null ? "" : s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n"); }
 
@@ -125,9 +129,9 @@ public final class NotifHistory {
         final Entry e = new Entry();
         e.when = sbn.getPostTime() > 0 ? sbn.getPostTime() : System.currentTimeMillis();
         e.pkg = sbn.getPackageName();
-        e.key = sbn.getKey();
-        e.title = t;
-        e.text = s;
+        e.key = cap(sbn.getKey(), 300);
+        e.title = cap(t, 300);
+        e.text = cap(s, 1500);
         e.open = n.contentIntent;
         H.post(new Runnable() { @Override public void run() { add(e); } });
     }
@@ -168,11 +172,11 @@ public final class NotifHistory {
                     try {
                         File tmp = new File(f.getPath() + ".tmp");
                         Writer w = new OutputStreamWriter(new FileOutputStream(tmp), "UTF-8");
-                        for (Entry e : copy) w.write(e.when + "\t" + e.pkg + "\t" + esc(e.key) + "\t" + esc(e.title) + "\t" + esc(e.text) + "\n");
+                        for (Entry e : copy) w.write(e.when + "\t" + e.pkg + "\t"); w.write(esc(e.key)); w.write("\t"); w.write(esc(e.title)); w.write("\t"); w.write(esc(e.text)); w.write("\n");
                         w.close();
                         //noinspection ResultOfMethodCallIgnored
                         tmp.renameTo(f);
-                    } catch (Exception ignored) { }
+                    } catch (Throwable ignored) { }
                 }
             });
         }

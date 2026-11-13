@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.45.8
+- Fixed the crash that stopped the launcher opening: the notification history could grow huge from one oversized notification and run the phone out of memory. Notification text is now capped, and an oversized history file is discarded.
+
 ### What's new in 1.45.7
 - If Grove ever crashes, a crash screen now appears with the error, a Copy button, and options to reset the settings (or settings and home layout) so a crash can never lock you out of the launcher.
 
