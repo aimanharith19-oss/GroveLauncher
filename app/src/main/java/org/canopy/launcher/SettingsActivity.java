@@ -422,6 +422,7 @@ public class SettingsActivity extends Activity {
         toggle("Show labels in drawer", "drawer_labels", true);
         toggle("Frequent apps row", "drawer_frequent", true);
         toggle("Wave A\u2013Z scroller", "drawer_alphabet", false);
+        toggle("Live blur on the search bar (can make scrolling stutter)", "acrylic_blur", false);
         toggle("Apps in a tab only show in that tab", "tabs_hide_from_all", true);
         toggle("Open keyboard when drawer opens", "drawer_keyboard", false);
         action("Drawer tabs", groupSummary(true), new Runnable() { @Override public void run() { manageGroups(true); } });

@@ -31,14 +31,14 @@ public class AcrylicBar extends LinearLayout {
     private final int[] me = new int[2], src = new int[2];
 
     private final ViewTreeObserver.OnScrollChangedListener onScroll = new ViewTreeObserver.OnScrollChangedListener() {
-        @Override public void onScrollChanged() { if (isShown()) invalidate(); } // only re-blur while visible
+        @Override public void onScrollChanged() { if (node != null && isShown()) invalidate(); } // only re-blur while visible
     };
 
     public AcrylicBar(Context c, int surfaceColor) {
         super(c);
         setOrientation(VERTICAL);
         setWillNotDraw(false);
-        boolean blur = Build.VERSION.SDK_INT >= 31;
+        boolean blur = Build.VERSION.SDK_INT >= 31 && Prefs.sp(c).getBoolean("acrylic_blur", false); // live blur re-draws the list every scroll frame: off by default
         tintColor = Ui.alpha(surfaceColor, blur ? 0xA6 : 0xEB);
         tint.setColor(tintColor);
         shadowH = Ui.dp(c, 14);
