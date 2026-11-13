@@ -26,6 +26,8 @@ public class AcrylicBar extends LinearLayout {
     private final int tintColor, shadowH;
     private final float blurRadius;
     private float shadowAmt, cut;
+    private boolean effectSet;
+    private int shaderH = -1;
     private final int[] me = new int[2], src = new int[2];
 
     private final ViewTreeObserver.OnScrollChangedListener onScroll = new ViewTreeObserver.OnScrollChangedListener() {
@@ -100,8 +102,11 @@ public class AcrylicBar extends LinearLayout {
             c.drawRect(0, 0, w, h, tint);
             if (!drew) tint.setColor(tintColor);
             if (shadowAmt > 0.01f) {
-                shadow.setShader(new LinearGradient(0, h, 0, h + shadowH,
-                        Ui.alpha(0xFF000000, (int) (0x38 * shadowAmt)), 0x00000000, Shader.TileMode.CLAMP));
+                if (shaderH != h) {
+                    shadow.setShader(new LinearGradient(0, h, 0, h + shadowH, 0x38000000, 0x00000000, Shader.TileMode.CLAMP));
+                    shaderH = h;
+                }
+                shadow.setAlpha((int) (255 * shadowAmt));
                 c.drawRect(0, h, w, h + shadowH, shadow);
             }
         }
@@ -116,10 +121,14 @@ public class AcrylicBar extends LinearLayout {
             source.getLocationInWindow(src);
             n.setPosition(0, 0, w, h);
             android.graphics.RecordingCanvas rc = n.beginRecording(w, h);
+            rc.clipRect(0, 0, w, h); // only the strip under the bar: skip every app icon outside it
             rc.translate(src[0] - me[0], src[1] - me[1]);
             source.draw(rc);
             n.endRecording();
-            n.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP));
+            if (!effectSet) {
+                n.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP));
+                effectSet = true;
+            }
             c.save();
             c.clipRect(0, 0, w, h);
             c.drawRenderNode(n);

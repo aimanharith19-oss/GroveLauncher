@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.45.5
+- Smoother app drawer scrolling: the frosted search bar now only redraws the strip behind it instead of the whole app list on every frame.
+
 ### What's new in 1.45.4
 - Fixed the app drawer animation freezing when you swipe into it. The home screen is no longer re-blurred on every frame (it is skipped on Windows Phone style), and the status bar change now waits until the animation finishes.
 
