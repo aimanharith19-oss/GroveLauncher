@@ -1466,7 +1466,8 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
     /** Animates the "something is open over home" depth effect. */
     public void setOverlay(boolean on) {
-        root.post(new Runnable() { @Override public void run() { try { applyStatusBar(); } catch (Throwable ignored) { } updateFab(true); } });
+        root.postDelayed(new Runnable() { @Override public void run() { try { applyStatusBar(); } catch (Throwable ignored) { } } }, Anim.dur(this, 340));
+        root.post(new Runnable() { @Override public void run() { updateFab(true); } });
         if (overlayAnim != null) overlayAnim.cancel();
         overlayAnim = android.animation.ValueAnimator.ofFloat(overlayAmt, on ? 1f : 0f);
         overlayAnim.setDuration(Anim.dur(this, on ? 320 : 240));
@@ -1519,7 +1520,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         int maxBlur = Ui.dp(this, 36);
         // Blur the wallpaper behind the window (needs a device with cross-window blur enabled).
         int wb = blurOn ? Math.round(amt * maxBlur) : 0;
-        if (Math.abs(wb - lastWindowBlur) >= 2 || (wb == 0 && lastWindowBlur != 0)) {
+        if (Math.abs(wb - lastWindowBlur) >= 6 || (wb == 0 && lastWindowBlur != 0) || (wb == maxBlur && lastWindowBlur != wb)) {
             lastWindowBlur = wb;
             try {
                 if (getWindowManager().isCrossWindowBlurEnabled()) getWindow().setBackgroundBlurRadius(wb);
@@ -1529,7 +1530,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                     ? android.graphics.RenderEffect.createBlurEffect(wb, wb, android.graphics.Shader.TileMode.CLAMP) : null);
         }
         // Blur the home screen itself behind the drawer / folders / widget page.
-        int vb = blurOn ? Math.round(overlayAmt * Ui.dp(this, 22)) : 0;
+        int vb = blurOn && !winPhone() ? Math.round(overlayAmt * 5f) * Ui.dp(this, 22) / 5 : 0; // no per-frame re-blur (it froze the drawer animation)
         if (vb != lastViewBlur) {
             lastViewBlur = vb;
             android.graphics.RenderEffect fx = vb > 0
