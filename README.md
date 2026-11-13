@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.45.3
+- Hardened what runs when you come back from an app (widgets, web tabs, wallpaper, feed, floating button, the keep-running service) so a failure in any of them can no longer take the launcher down.
+
 ### What's new in 1.45.2
 - Fixed "Some settings couldn't be shown" (introduced by the new row icons).
 

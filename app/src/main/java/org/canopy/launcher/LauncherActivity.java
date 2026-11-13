@@ -239,8 +239,8 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         root.post(new Runnable() {
             @Override public void run() {
                 if (stopped) return;
-                try { widgetHost.startListening(); } catch (Exception ignored) { }
-                wakeWeb();
+                try { widgetHost.startListening(); } catch (Throwable ignored) { }
+                try { wakeWeb(); } catch (Throwable ignored) { }
             }
         });
     }
@@ -455,6 +455,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         root.post(new Runnable() {
             @Override public void run() {
                 if (!resumed) return;
+                try {
                 if (blurLayer != null && blurLayer.getVisibility() == View.GONE) blurLayer.setImageDrawable(null); // wallpaper may have changed
                 if (wall3d != null) {
                     android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
@@ -464,6 +465,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                 else if (Wallpaper3D.wanted(LauncherActivity.this) && Wallpaper3D.usesSystem(LauncherActivity.this)
                         && Wallpaper3D.canReadSystem(LauncherActivity.this)) refreshSystemWallpaper();
                 maybeAskWallpaperAccess();
+                } catch (Throwable ignored) { }
             }
         });
         if (needsRecreate) { needsRecreate = false; recreate(); return; }
@@ -474,7 +476,9 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                 && android.os.SystemClock.elapsedRealtime() - lastFeedRefresh > 60_000) {
             lastFeedRefresh = android.os.SystemClock.elapsedRealtime();
             root.postDelayed(new Runnable() {
-                @Override public void run() { if (feed != null && resumed && workspace.getCurrentPage() != 0) feed.refresh(); }
+                @Override public void run() {
+                    try { if (feed != null && resumed && workspace.getCurrentPage() != 0) feed.refresh(); } catch (Throwable ignored) { }
+                }
             }, 800); // after the return animation, not during it
         }
         if (returningHome) {
@@ -814,7 +818,11 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
     /** At home: bottom right, opens the app list. In the app list: bottom left, goes back home. */
     void updateFab(boolean animate) {
-        if (fab == null) return;
+        if (fab == null || root == null) return;
+        try { updateFabNow(animate); } catch (Throwable ignored) { }
+    }
+
+    private void updateFabNow(boolean animate) {
         boolean open = drawer != null && drawer.isOpen();
         ((ImageView) fab.getTag()).setImageDrawable(Ui.tinted(this, open ? R.drawable.ic_home : R.drawable.ic_apps, Ui.palette(this).onAccent));
         fab.setContentDescription(open ? "Home" : "Apps");
@@ -1458,7 +1466,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
     /** Animates the "something is open over home" depth effect. */
     public void setOverlay(boolean on) {
-        root.post(new Runnable() { @Override public void run() { applyStatusBar(); updateFab(true); } });
+        root.post(new Runnable() { @Override public void run() { try { applyStatusBar(); } catch (Throwable ignored) { } updateFab(true); } });
         if (overlayAnim != null) overlayAnim.cancel();
         overlayAnim = android.animation.ValueAnimator.ofFloat(overlayAmt, on ? 1f : 0f);
         overlayAnim.setDuration(Anim.dur(this, on ? 320 : 240));
