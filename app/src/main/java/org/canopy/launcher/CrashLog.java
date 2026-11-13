@@ -34,9 +34,26 @@ public final class CrashLog {
                     out.write(txt.getBytes(StandardCharsets.UTF_8));
                     out.close();
                 } catch (Throwable ignored) { }
+                try {
+                    if (!isCrashProcess(app)) {
+                        android.content.Intent i = new android.content.Intent(app, CrashActivity.class);
+                        i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        app.startActivity(i);
+                    }
+                } catch (Throwable ignored) { }
                 if (prev != null) prev.uncaughtException(t, e);
             }
         });
+    }
+
+    public static boolean isCrashProcess(Context c) {
+        try {
+            if (Build.VERSION.SDK_INT >= 28) return android.app.Application.getProcessName().endsWith(":crash");
+            java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader("/proc/self/cmdline"));
+            String n = r.readLine();
+            r.close();
+            return n != null && n.trim().endsWith(":crash");
+        } catch (Throwable e) { return false; }
     }
 
     public static String read(Context c) {

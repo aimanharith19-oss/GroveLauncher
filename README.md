@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.45.7
+- If Grove ever crashes, a crash screen now appears with the error, a Copy button, and options to reset the settings (or settings and home layout) so a crash can never lock you out of the launcher.
+
 ### What's new in 1.45.6
 - App drawer scrolling is now fully smooth: the search bar uses a frosted tint instead of live blur, which re-drew the app list on every frame. Live blur is still available under Settings > App drawer if you want it.
 

@@ -132,6 +132,14 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".CrashActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:process=":crash"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+
         <!-- "Canopy Settings" appears in the app drawer, like "Nova Settings" -->
         <activity
             android:name=".SettingsActivity"

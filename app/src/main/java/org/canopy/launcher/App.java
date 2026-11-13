@@ -31,6 +31,7 @@ public class App extends Application {
     @Override public void onCreate() {
         super.onCreate();
         sInstance = this;
+        if (CrashLog.isCrashProcess(this)) return; // the crash screen runs on its own, bare
         CrashLog.install(this);
         KeepAliveService.sync(this);
         registerReceiver(new android.content.BroadcastReceiver() {
