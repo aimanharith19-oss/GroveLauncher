@@ -1,0 +1,18 @@
+Canopy Launcher
+Copyright 2026 The Canopy Launcher authors
+
+This program is licensed under the GNU General Public License, version 3 or (at your
+option) any later version (see LICENSE). It comes with ABSOLUTELY NO WARRANTY.
+
+Original work. Canopy re-implements features and ideas popularised by:
+  - Nova Launcher (TeslaCoil Software)      - closed source; no code used
+  - Microsoft Launcher (Microsoft)          - closed source; no code used
+
+The names above are trademarks of their respective owners and are used only to
+describe inspiration. Canopy is not affiliated with or endorsed by them.
+
+Third-party material included:
+  - Material Design icons (Google LLC), Apache License 2.0
+    https://github.com/google/material-design-icons
+    Used for: search, settings, book, back, refresh, folder, info, delete, close,
+    edit, visibility-off, add, widgets, wallpaper, resize, shortcut, play, skip icons.

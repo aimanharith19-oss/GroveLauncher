@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Grove Launcher</string>
+    <string name="settings_name">Grove Settings</string>
+    <string name="accessibility_label">Grove gestures</string>
+    <string name="accessibility_desc">Lets Grove Launcher gestures lock the screen, open recent apps, quick settings or the power menu. It does not read or collect anything on your screen.</string>
+    <string name="badges_label">Grove notification badges</string>
+</resources>

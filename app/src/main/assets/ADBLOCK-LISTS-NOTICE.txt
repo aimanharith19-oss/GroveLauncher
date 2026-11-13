@@ -1,0 +1,11 @@
+adblock.gz is generated from these filter lists (the same lists uBlock Origin uses),
+fetched from https://github.com/uBlockOrigin/uAssets :
+
+  - uBlock filters, uBlock filters – Privacy, uBlock filters – Badware risks, uBlock filters – Quick fixes
+    (filters/*.txt) — GPL-3.0, (c) Raymond Hill and contributors
+  - EasyList and EasyPrivacy (thirdparties/easylist) — GPL-3.0 / CC BY-SA 3.0, (c) The EasyList authors
+  - Peter Lowe's Ad and tracking server list (thirdparties/pgl.yoyo.org) — (c) Peter Lowe, https://pgl.yoyo.org/adservers/
+
+The file holds only the rules Canopy can apply (blocked domains, exceptions and site-specific element hiding),
+unchanged in meaning, and is distributed as a separate data file alongside the GPL-3.0 launcher.
+Canopy downloads fresh copies of the same lists from GitHub when you update them in Settings.

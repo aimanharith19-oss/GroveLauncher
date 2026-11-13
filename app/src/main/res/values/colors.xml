@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#4CAF7D</color>
+    <color name="icon_bg">#1F4D3A</color>
+    <color name="launcher_icon_bg">#1E4D3B</color>
+    <color name="reader_icon_bg">#2B3A67</color>
+    <color name="canopy_leaf">#A8E6B8</color>
+</resources>

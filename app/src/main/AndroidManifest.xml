@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Canopy Launcher - an open-source, Nova-style home screen with a Microsoft Launcher-style feed.
+  Licensed under the GNU General Public License v3.0 or later (see LICENSE).
+
+  PRIVACY: no analytics, no ads, no trackers. The INTERNET permission is used only by the web tabs
+  you open in the feed yourself, ad-list updates, and one-time downloads of website icons for the
+  feed's Private DNS providers. Nothing about you is sent anywhere.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Only for web tabs you open in the feed (e.g. X/Twitter). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Optional: Shizuku (lock screen without an accessibility service) -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <!-- Optional: switch Private DNS from the feed (granted via Shizuku or "adb shell pm grant", never by default) -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <!-- Keep a web tab's video/audio playing in the background (with a notification you can stop it from). -->
+    <!-- 3D wallpaper: read your current wallpaper so Canopy can draw it with depth. Android 13+ only offers
+         this through "All files access"; Canopy reads nothing but the wallpaper. Optional. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Pull down the notification shade from the swipe-down gesture. Normal permission. -->
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <!-- Lets the "Uninstall" action open the system uninstall dialog. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- Optional, each asked for only when you use the feature: -->
+    <!-- Agenda card on the Glance tab (reads the calendar on this phone only). -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <!-- Contacts results in search (asked only when you tap "Search your contacts too"). -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- Brightness slider and auto-rotate toggle in the expanded dock. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- Do Not Disturb toggle in the expanded dock. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- Wi-Fi toggle state in the expanded dock. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Screen time card (granted by you in "Usage access"). -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
+    <!-- Package visibility: only what a launcher genuinely needs. -->
+    <queries>
+        <!-- Grove Guard's status for the feed card -->
+        <provider android:authorities="org.grove.guard.status" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent>
+        <!-- Browsers and download managers, for "open websites in" / "downloads go to" in Settings -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:mimeType="application/octet-stream" />
+        </intent>
+        <package android:name="com.dv.adm" />
+        <package android:name="com.dv.adm.pay" />
+        <package android:name="idm.internet.download.manager" />
+        <package android:name="idm.internet.download.manager.plus" />
+        <package android:name="org.freedownloadmanager.fdm" />
+        <!-- Icon packs (ADW / Nova compatible) -->
+        <intent>
+            <action android:name="org.adw.launcher.THEMES" />
+        </intent>
+        <intent>
+            <action android:name="com.novalauncher.THEME" />
+        </intent>
+        <!-- Default dock apps on first run -->
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.STILL_IMAGE_CAMERA" />
+        </intent>
+        <!-- Voice search in the drawer: hands off to the phone's speech recognizer / assistant -->
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VOICE_COMMAND" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".App"
+        android:allowBackup="false"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Canopy">
+
+        <!-- The home screen itself -->
+        <activity
+            android:name=".LauncherActivity"
+            android:clearTaskOnLaunch="true"
+            android:configChanges="keyboard|keyboardHidden|navigation|screenLayout|orientation|screenSize|smallestScreenSize"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:resumeWhilePausing="true"
+            android:stateNotNeeded="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Canopy.Launcher"
+            android:windowSoftInputMode="adjustResize|stateHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- "Canopy Settings" appears in the app drawer, like "Nova Settings" -->
+        <activity
+            android:name=".SettingsActivity"
+            android:theme="@style/Theme.Canopy.Settings"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/settings_name"
+            android:taskAffinity="org.canopy.launcher.settings">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Accepts "Add to home screen" requests from other apps (Chrome, etc.) -->
+        <activity
+            android:name=".AddShortcutActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:theme="@style/Theme.Canopy.Invisible">
+            <intent-filter>
+                <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Optional: lets gestures lock the screen / open recents. Reads no screen content. -->
+        <!-- Shizuku hands Canopy its binder through this (only Shizuku / the system can call it) -->
+        <provider
+            android:name=".ShizukuShell$Provider"
+            android:authorities="org.canopy.launcher.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+        <service
+            android:name=".CanopyAccessibility"
+            android:exported="false"
+            android:label="@string/accessibility_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility" />
+        </service>
+
+        <!-- Pop-up player: a feed web tab's video floating over other apps (picture-in-picture). -->
+        <activity
+            android:name=".PipActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            android:taskAffinity="org.canopy.launcher.pip"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+
+        <!-- Optional: keeps Grove from being closed by Android -->
+        <service
+            android:name=".KeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the launcher in memory at the user's request so it and its web tabs do not restart" />
+        </service>
+
+        <!-- Background play for web tabs in the feed: runs only while a tab is playing. -->
+        <service
+            android:name=".MediaService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Optional: notification badges on icons. Only counts per app are kept, in memory. -->
+        <service
+            android:name=".BadgeService"
+            android:exported="false"
+            android:label="@string/badges_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+    </application>
+</manifest>

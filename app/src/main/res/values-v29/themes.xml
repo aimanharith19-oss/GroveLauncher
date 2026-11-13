@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 10+: device-default DayNight theme. Follows the phone's dark theme, and on Android 12+
+         picks up Material You styling for switches, dialogs and sliders. -->
+    <style name="Theme.Canopy" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

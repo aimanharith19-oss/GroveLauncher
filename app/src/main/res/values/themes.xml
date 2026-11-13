@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home screen: wallpaper shows through, edge-to-edge -->
+    <style name="Theme.Canopy.Launcher" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@style/LauncherWindowAnim</item>
+    </style>
+
+    <!-- The home screen's own window animations: a quick fade instead of Android's slow zoom/slide -->
+    <style name="LauncherWindowAnim" parent="@android:style/Animation">
+        <item name="android:activityOpenEnterAnimation">@anim/launcher_in</item>
+        <item name="android:activityOpenExitAnimation">@anim/launcher_out</item>
+        <item name="android:activityCloseEnterAnimation">@anim/launcher_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/launcher_out</item>
+        <item name="android:taskOpenEnterAnimation">@anim/launcher_in</item>
+        <item name="android:taskOpenExitAnimation">@anim/launcher_out</item>
+        <item name="android:taskCloseEnterAnimation">@anim/launcher_in</item>
+        <item name="android:taskCloseExitAnimation">@anim/launcher_out</item>
+        <item name="android:taskToFrontEnterAnimation">@anim/launcher_in</item>
+        <item name="android:taskToFrontExitAnimation">@anim/launcher_out</item>
+        <item name="android:taskToBackEnterAnimation">@anim/launcher_in</item>
+        <item name="android:taskToBackExitAnimation">@anim/launcher_out</item>
+    </style>
+
+    <!-- Settings, library, series pages -->
+    <style name="Theme.Canopy" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:colorPrimary">@color/accent</item>
+        <item name="android:colorPrimaryDark">@color/icon_bg</item>
+    </style>
+
+    <!-- Settings: see-through over a blurred wallpaper, like the feed -->
+    <style name="Theme.Canopy.Settings" parent="Theme.Canopy">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Activity</item>
+    </style>
+
+    <!-- Settings in dark mode: dark widgets, dialogs and text fields -->
+    <style name="Theme.Canopy.SettingsDark" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Activity</item>
+    </style>
+
+    <!-- Reader: black, fullscreen -->
+    <style name="Theme.Canopy.Reader" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Shows only a small "where should this shortcut go?" dialog -->
+    <style name="Theme.Canopy.Invisible" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+</resources>
