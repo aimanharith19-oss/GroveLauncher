@@ -172,7 +172,7 @@ public final class NotifHistory {
                     try {
                         File tmp = new File(f.getPath() + ".tmp");
                         Writer w = new OutputStreamWriter(new FileOutputStream(tmp), "UTF-8");
-                        for (Entry e : copy) w.write(e.when + "\t" + e.pkg + "\t"); w.write(esc(e.key)); w.write("\t"); w.write(esc(e.title)); w.write("\t"); w.write(esc(e.text)); w.write("\n");
+                        for (Entry e : copy) { w.write(e.when + "\t" + e.pkg + "\t"); w.write(esc(e.key)); w.write("\t"); w.write(esc(e.title)); w.write("\t"); w.write(esc(e.text)); w.write("\n"); }
                         w.close();
                         //noinspection ResultOfMethodCallIgnored
                         tmp.renameTo(f);
