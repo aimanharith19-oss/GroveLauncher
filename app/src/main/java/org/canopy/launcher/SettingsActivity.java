@@ -300,7 +300,7 @@ public class SettingsActivity extends Activity {
             for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(web, 0)) {
                 String p = ri.activityInfo.packageName;
                 if (p.equals(getPackageName()) || bv.contains(p)) continue;
-                bv.add(p); bl.add(String.valueOf(ri.loadLabel(pm)));
+                bv.add(p); bl.add(p.equals(WebHistory.BROWSER_PKG) ? "Grove Browser (Gecko)" : String.valueOf(ri.loadLabel(pm)));
             }
             Intent file = new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse("https://example.com/file.bin"), "application/octet-stream");
             for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(file, 0)) {
@@ -507,6 +507,20 @@ public class SettingsActivity extends Activity {
         toggle("Show only the website icon on tabs", "web_icon_only", false);
         toggle("Play videos automatically", "web_autoplay", true);
         browserChoices();
+        toggle("Link bookmarks & history with Grove Browser", "browser_link", true);
+        action("Sync with Grove Browser now", WebHistory.browserInstalled(this) ? "Shares bookmarks and history both ways. Nothing is deleted."
+                : "Install Grove Browser (the Gecko browser) to use this", new Runnable() {
+            @Override public void run() {
+                Ui.toast(SettingsActivity.this, "Linking\u2026");
+                final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+                App.IO.execute(new Runnable() {
+                    @Override public void run() {
+                        final String m = WebHistory.sync(SettingsActivity.this);
+                        h.post(new Runnable() { @Override public void run() { Ui.toast(SettingsActivity.this, m); } });
+                    }
+                });
+            }
+        });
         toggle("Keep Grove running (never restarts, tabs never reload)", "keep_alive", false);
         if (sp.getBoolean("keep_alive", false)) action("Allow unrestricted battery use", "Stops Android from closing Grove to save power", new Runnable() {
             @Override public void run() {

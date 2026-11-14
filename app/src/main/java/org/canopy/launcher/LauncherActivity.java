@@ -445,6 +445,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     }
 
     @Override protected void onResume() {
+        try { WebHistory.autoSync(this); } catch (Throwable ignored) { }
         super.onResume();
         resumed = true;
         shown = true;

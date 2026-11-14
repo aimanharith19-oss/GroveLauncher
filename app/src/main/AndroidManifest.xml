@@ -47,6 +47,8 @@
 
     <!-- Package visibility: only what a launcher genuinely needs. -->
     <queries>
+        <package android:name="app.grove.browser" />
+        <provider android:authorities="app.grove.browser.sync" />
         <!-- Grove Guard's status for the feed card -->
         <provider android:authorities="org.grove.guard.status" />
         <intent>

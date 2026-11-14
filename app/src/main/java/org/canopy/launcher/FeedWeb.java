@@ -542,6 +542,7 @@ final class FeedWeb {
                 if (v.getSettings().getCacheMode() == android.webkit.WebSettings.LOAD_NO_CACHE) v.getSettings().setCacheMode(android.webkit.WebSettings.LOAD_DEFAULT);
                 inject(a, wv);
                 if (u != null && u.startsWith("http")) prefs(a).edit().putString("last_" + id, u).apply();
+                if (u != null && u.startsWith("http")) WebHistory.add(a, u, v.getTitle());
                 CookieManager.getInstance().flush();
             }
         });

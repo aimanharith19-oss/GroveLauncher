@@ -28,6 +28,11 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.46.0
+- **History** in the feed browser (tab menu → History): tap to open, Clear all.
+- **Linked with Grove Browser**: bookmarks and history are shared both ways with Grove Browser (the Gecko / Firefox-engine browser). Nothing is deleted on either side. It syncs quietly while you use the launcher, or on demand in Settings. Needs the matching Grove Browser update.
+- Tab menu → **Open in Grove Browser**; it is also offered in Settings → Open websites in. Grove can't carry the Gecko engine inside itself (it would be about 100 MB, with no trackers or extra dependencies being a rule here), so it hands pages to Grove Browser.
+
 ### What's new in 1.45.8
 - Fixed the crash that stopped the launcher opening: the notification history could grow huge from one oversized notification and run the phone out of memory. Notification text is now capped, and an oversized history file is discarded.
 

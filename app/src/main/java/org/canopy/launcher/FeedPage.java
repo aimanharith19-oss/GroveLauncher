@@ -876,6 +876,24 @@ public class FeedPage extends LinearLayout {
         }).setNegativeButton("Cancel", null).show();
     }
 
+    /** The feed browser's history: tap to open it in this tab, long-press to remove, and a Clear button. */
+    private void showHistory(final String id) {
+        final Context c = getContext();
+        final List<String[]> list = WebHistory.recent(c, 150);
+        if (list.isEmpty()) { Ui.toast(c, "No history yet"); return; }
+        String[] names = new String[list.size()];
+        for (int i = 0; i < names.length; i++) {
+            String[] h = list.get(i);
+            names[i] = (h[1].isEmpty() ? hostOf(h[0]) : h[1]) + "\n" + hostOf(h[0]) + " \u2022 "
+                    + android.text.format.DateUtils.getRelativeTimeSpanString(Long.parseLong(h[2]));
+        }
+        Ui.dialog(c).setTitle("History").setItems(names, new DialogInterface.OnClickListener() {
+            @Override public void onClick(DialogInterface d, int w) { launcher.feedWebView(id).loadUrl(list.get(w)[0]); }
+        }).setNeutralButton("Clear all", new DialogInterface.OnClickListener() {
+            @Override public void onClick(DialogInterface d, int w) { WebHistory.clear(c); Ui.toast(c, "History cleared"); }
+        }).setNegativeButton("Close", null).show();
+    }
+
     private void tabMenu(final String id) {
         final Context c = getContext();
         final boolean app = FeedWeb.isAppTab(id) && !FeedWeb.webMode(c, id); // opens the real app
@@ -896,6 +914,18 @@ public class FeedPage extends LinearLayout {
                     refresh();
                 }
             });
+            labels.add("History");
+            acts.add(new Runnable() { @Override public void run() { showHistory(id); } });
+            if (WebHistory.browserInstalled(c)) {
+                labels.add("Open in Grove Browser");
+                acts.add(new Runnable() {
+                    @Override public void run() {
+                        android.webkit.WebView wv = launcher.feedWebView(id);
+                        String u = wv.getUrl() != null ? wv.getUrl() : FeedWeb.url(c, id);
+                        launcher.safeStart(new Intent(Intent.ACTION_VIEW, Uri.parse(u)).setPackage(WebHistory.BROWSER_PKG));
+                    }
+                });
+            }
             labels.add("Change start page");
             acts.add(new Runnable() {
                 @Override public void run() {
