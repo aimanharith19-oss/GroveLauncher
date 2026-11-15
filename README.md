@@ -28,6 +28,11 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.49.1
+- **Ad blocking is now only in Grove Guard.** Grove's own filter lists are gone (about 1.4 MB smaller), so Settings → Feed browser → "Block ads & trackers" asks Grove Guard. Without Grove Guard nothing is blocked. Lists, your rules and updates are in Grove Guard → web.
+- **Website history in Grove Guard** (web → History) for pages opened in the feed's browser. Needs Grove Guard 1.6.1.
+- **Notification history keeps 3 days at most.**
+
 ### What's new in 1.49
 - **Groveguard web filtering**: with Groveguard installed, the feed browser asks Groveguard about every page and request — ad/tracker
   blocking (uBlock Origin / EasyList lists), 18+ lists, dangerous sites and your own allow/block rules are controlled and logged in

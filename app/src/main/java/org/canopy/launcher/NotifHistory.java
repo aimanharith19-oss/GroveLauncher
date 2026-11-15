@@ -51,10 +51,8 @@ public final class NotifHistory {
 
     public static boolean enabled(Context c) { return Prefs.sp(c).getBoolean("notif_history", true); }
 
-    /** How long to keep notifications, in days (0 = forever, up to the size limit). */
-    static int keepDays(Context c) {
-        try { return Integer.parseInt(Prefs.sp(c).getString("notif_history_keep", "30")); } catch (Exception e) { return 30; }
-    }
+    /** Notifications are kept for 3 days at most. */
+    static int keepDays(Context c) { return 3; }
 
     private static File file(Context c) { return new File(c.getFilesDir(), "notification_history.tsv"); }
 
@@ -152,7 +150,7 @@ public final class NotifHistory {
     }
 
     private static void prune() {
-        int days = app == null ? 30 : keepDays(app);
+        int days = 3;
         if (days > 0) {
             long since = System.currentTimeMillis() - days * 24L * 3600 * 1000;
             int drop = 0;

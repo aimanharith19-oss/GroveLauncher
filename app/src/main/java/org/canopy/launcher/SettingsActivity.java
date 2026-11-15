@@ -531,16 +531,12 @@ public class SettingsActivity extends Activity {
                 new String[]{"Run 2 minutes, then freeze (saves battery)", "Keep running (uses more battery)", "Freeze right away (best battery)"},
                 FeedWeb.bgMode(this));
         toggle("Keep videos & music playing in the background", "web_background", true);
-        toggle("Block ads & trackers (uBlock Origin filter lists)", "web_adblock", true);
+        toggle("Block ads & trackers (needs Grove Guard)", "web_adblock", true);
         toggle("Block pop-ups, ad redirects and pages opening other apps", "web_block_popups", true);
-        long upd = Prefs.sp(this).getLong("web_adblock_updated", 0);
-        action("Update filter lists", upd == 0 ? "Using the lists bundled with Grove. Tap to download the latest from GitHub."
-                : "Last updated " + android.text.format.DateUtils.getRelativeTimeSpanString(upd), new Runnable() {
+        action("Filter lists, rules & history", "Ad blocking and website history live in Grove Guard \u2192 web. Tap to open it.", new Runnable() {
             @Override public void run() {
-                Ui.toast(SettingsActivity.this, "Downloading uBlock Origin filter lists\u2026");
-                AdBlock.update(SettingsActivity.this, new AdBlock.Done() {
-                    @Override public void done(boolean ok, String message) { Ui.toast(SettingsActivity.this, message); }
-                });
+                try { startActivity(new Intent().setClassName("org.grove.guard", "org.grove.guard.MainActivity")); }
+                catch (Exception e) { Ui.toast(SettingsActivity.this, "Grove Guard isn't installed"); }
             }
         });
 

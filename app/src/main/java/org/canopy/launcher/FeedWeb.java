@@ -439,7 +439,6 @@ final class FeedWeb {
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     static WebView create(final LauncherActivity a, final String id) {
-        AdBlock.init(a);
         // A context wrapper whose base can be swapped: the page survives the home screen being rebuilt
         // (settings changes, theme…) instead of being closed and reloaded.
         final CardWebView wv = new CardWebView(new android.content.MutableContextWrapper(a), id);
@@ -491,12 +490,6 @@ final class FeedWeb {
                         wv.blocked.incrementAndGet();
                         return new android.webkit.WebResourceResponse("text/plain", "utf-8", new java.io.ByteArrayInputStream(new byte[0]));
                     }
-                }
-                // uBlock Origin lists: drop ad / tracker requests (never the page itself)
-                if (r.isForMainFrame()) return null;
-                if (AdBlock.shouldBlock(a, u, wv.pageHost)) {
-                    wv.blocked.incrementAndGet();
-                    return new android.webkit.WebResourceResponse("text/plain", "utf-8", new java.io.ByteArrayInputStream(new byte[0]));
                 }
                 return empty;
             }
@@ -556,7 +549,7 @@ final class FeedWeb {
                 if (v.getSettings().getCacheMode() == android.webkit.WebSettings.LOAD_NO_CACHE) v.getSettings().setCacheMode(android.webkit.WebSettings.LOAD_DEFAULT);
                 inject(a, wv);
                 if (u != null && u.startsWith("http")) prefs(a).edit().putString("last_" + id, u).apply();
-                if (u != null && u.startsWith("http")) WebHistory.add(a, u, v.getTitle());
+                if (u != null && u.startsWith("http")) { WebHistory.add(a, u, v.getTitle()); AdBlock.visit(a, u, v.getTitle()); }
                 CookieManager.getInstance().flush();
             }
         });
@@ -635,7 +628,6 @@ final class FeedWeb {
             if (g != null) css = "(function(){var s=document.createElement('style');s.textContent=" + org.json.JSONObject.quote(g)
                     + ";(document.head||document.documentElement).appendChild(s);})();";
         }
-        if (css == null) css = AdBlock.cosmeticJs(c, wv.pageHost);
         if (css != null) wv.evaluateJavascript(css, null);
     }
 
