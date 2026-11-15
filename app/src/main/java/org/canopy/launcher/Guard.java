@@ -79,14 +79,17 @@ public final class Guard {
                 : "you".equals(kind) ? "You added this site to your block list in Groveguard."
                 : "This site is on Groveguard's list of malware, phishing, tracker and ad sites. Don't enter passwords or card details.";
         String h = host == null ? "" : host.replace("&", "&amp;").replace("<", "&lt;").replace(".", "[.]");
+        String w = why == null || why.isEmpty() ? ("adult".equals(kind) ? "18+ list" : "you".equals(kind) ? "your block list" : "dangerous-site list") : why;
+        w = w.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
         return "<!doctype html><html><head><meta name=viewport content='width=device-width,initial-scale=1'><style>"
                 + "body{margin:0;background:#000;color:#fff;font-family:sans-serif;font-weight:300;min-height:100vh;"
                 + "background-image:linear-gradient(" + ("adult".equals(kind) ? "#3b1f5a" : "#5a0a04") + ",#000 55%)}"
                 + "main{padding:28px 22px}.a{font-weight:600;font-size:15px}h1{font-weight:300;font-size:42px;margin:10px 0 16px}"
                 + "p{color:#ddd;font-size:16px;line-height:1.45}.h{font-size:22px;color:#fff;word-break:break-all}"
+                + ".w{border-left:3px solid " + ("adult".equals(kind) ? "#a05ad8" : "#e51400") + ";padding:4px 0 4px 12px;color:#fff}"
                 + "button{font:inherit;font-size:18px;color:#fff;background:#e51400;border:0;padding:12px 22px;margin-top:14px}</style></head>"
                 + "<body><main><div class=a>GROVEGUARD</div><h1>" + title + "</h1><div class=h>" + h + "</div><p>" + text
-                + "</p><p style='color:#8a8a8a'>Change this in Groveguard → web.</p>"
+                + "</p><p class=w>Reason: " + w + "</p><p style='color:#8a8a8a'>Change this in Groveguard → web.</p>"
                 + "<button onclick='history.length>1?history.back():location.replace(\"about:blank\")'>go back</button></main></body></html>";
     }
 }
