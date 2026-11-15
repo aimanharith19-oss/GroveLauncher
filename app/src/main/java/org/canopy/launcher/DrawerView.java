@@ -94,7 +94,11 @@ public class DrawerView extends FrameLayout {
         launcher = c;
         pal = Ui.palette(c);
         slop = ViewConfiguration.get(c).getScaledTouchSlop();
-        setBackgroundColor(Ui.alpha(pal.bg, Math.round(Prefs.drawerOpacity(c) * 2.55f)));
+        if (Ui.wp(c)) { // black with the accent glowing from the top, like Grove Music
+            int o = Math.round(Prefs.drawerOpacity(c) * 2.55f);
+            setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[]{Ui.alpha(pal.accent, 0x61 * o / 255), Ui.alpha(pal.accent, 0x18 * o / 255), Ui.alpha(0xFF000000, o)}));
+        } else setBackgroundColor(Ui.alpha(pal.bg, Math.round(Prefs.drawerOpacity(c) * 2.55f)));
 
         content = new LinearLayout(c);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -121,7 +125,7 @@ public class DrawerView extends FrameLayout {
         search.setTextColor(pal.text);
         search.setHintTextColor(pal.subtext);
         search.setTextSize(15);
-        search.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+        search.setTypeface(android.graphics.Typeface.create(Ui.wp(c) ? "sans-serif-light" : "sans-serif-medium", android.graphics.Typeface.NORMAL));
         search.setBackground(null);
         search.setSingleLine(true);
         search.setPadding(Ui.dp(c, 14), 0, Ui.dp(c, 4), 0);

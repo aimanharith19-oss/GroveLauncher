@@ -28,6 +28,11 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.47.0
+- **Windows Phone style now redesigns the whole launcher**, following Grove Music and Grovebook: black with the accent glowing from the top, flat square shapes, light lowercase type, the 20 Windows Phone accent colours, and dark flat dialogs.
+- **Settings** in Windows Phone style: a big "settings" title, a plain list of categories, plain text rows, square toggles, tilt-on-press and the "feather" slide-in. Switching home style reopens settings straight away in the new look.
+- The app drawer, feed, folders and pop-ups follow the same black, flat, square look.
+
 ### What's new in 1.46.0
 - **History** in the feed browser (tab menu → History): tap to open, Clear all.
 - **Linked with Grove Browser**: bookmarks and history are shared both ways with Grove Browser (the Gecko / Firefox-engine browser). Nothing is deleted on either side. It syncs quietly while you use the launcher, or on demand in Settings. Needs the matching Grove Browser update.

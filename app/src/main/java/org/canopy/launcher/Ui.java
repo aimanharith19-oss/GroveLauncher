@@ -32,7 +32,16 @@ public final class Ui {
         return Math.round(v * c.getResources().getDisplayMetrics().density);
     }
 
+    /** Windows Phone style: black, flat, square, light lowercase type (like Grove Music and Grovebook). */
+    private static boolean flat;
+
+    public static boolean wp(Context c) {
+        flat = "winphone".equals(Prefs.homeStyle(c));
+        return flat;
+    }
+
     public static boolean night(Context c) {
+        if (wp(c)) return true; // Windows Phone style is always black
         String t = Prefs.theme(c);
         if ("dark".equals(t)) return true;
         if ("light".equals(t)) return false;
@@ -78,8 +87,13 @@ public final class Ui {
                 }
             } catch (Exception ignored) { }
         }
+        if (flat) {
+            p.night = true;
+            p.bg = 0xFF000000; p.surface = 0xFF1B1B1B; p.surfaceAlt = 0xFF2B2B2B; p.divider = 0x22FFFFFF;
+        }
         // Strong, readable text: near-black on light, white on dark.
-        if (p.night) { p.text = 0xFFFFFFFF; p.subtext = 0xFFD2D6D3; }
+        if (flat) { p.text = 0xFFFFFFFF; p.subtext = 0xFF9A9A9A; }
+        else if (p.night) { p.text = 0xFFFFFFFF; p.subtext = 0xFFD2D6D3; }
         else { p.text = 0xFF0B0C0C; p.subtext = 0xFF3B403D; }
         p.accent = Prefs.accent(c);
         p.onAccent = isLight(p.accent) ? 0xFF101010 : 0xFFFFFFFF;
@@ -143,13 +157,13 @@ public final class Ui {
     public static GradientDrawable round(int color, float radiusPx) {
         GradientDrawable g = new GradientDrawable();
         g.setColor(color);
-        g.setCornerRadius(radiusPx);
+        g.setCornerRadius(flat ? 0 : radiusPx);
         return g;
     }
 
     /** Pressable background with individual corner radii (top-left, top-right, bottom-right, bottom-left). */
     public static Drawable pressable(Context c, int color, float tl, float tr, float br, float bl) {
-        float[] r = {tl, tl, tr, tr, br, br, bl, bl};
+        float[] r = flat ? new float[8] : new float[]{tl, tl, tr, tr, br, br, bl, bl};
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(color);
         bg.setCornerRadii(r);
@@ -168,13 +182,14 @@ public final class Ui {
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);
+        if (flat) t.setTypeface(android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL));
         return t;
     }
 
     public static TextView button(Context c, String label, int bg, int fg) {
         TextView t = text(c, label, 15, fg);
         t.setGravity(Gravity.CENTER);
-        t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+        if (!flat) t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
         int p = dp(c, 12);
         t.setPadding(p + p / 2, p - 2, p + p / 2, p - 2);
         t.setBackground(pressable(c, bg, dp(c, 22)));
@@ -223,13 +238,14 @@ public final class Ui {
     public static void roundCorners(View v, final float radius) {
         v.setOutlineProvider(new ViewOutlineProvider() {
             @Override public void getOutline(View view, Outline outline) {
-                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), flat ? 0 : radius);
             }
         });
         v.setClipToOutline(true);
     }
 
     public static AlertDialog.Builder dialog(Context c) {
+        if (wp(c)) return new AlertDialog.Builder(c, R.style.Theme_Grove_WpDialog);
         return new AlertDialog.Builder(c, night(c)
                 ? android.R.style.Theme_DeviceDefault_Dialog_Alert
                 : android.R.style.Theme_DeviceDefault_Light_Dialog_Alert);
