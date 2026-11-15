@@ -28,6 +28,10 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.47.1
+- Windows Phone style, much further: the **app drawer is now a Windows Phone app list** (accent-tinted square tile with the icon, big light name beside it), and its **tabs are pivot headers** (big light lowercase, the current one bright, the others dim).
+- The **feed** gets the accent-over-black tint all the way down, tinted tiles for cards with light lowercase titles, and pivot-style tabs. The home blur is off in this style.
+
 ### What's new in 1.47.0
 - **Windows Phone style now redesigns the whole launcher**, following Grove Music and Grovebook: black with the accent glowing from the top, flat square shapes, light lowercase type, the 20 Windows Phone accent colours, and dark flat dialogs.
 - **Settings** in Windows Phone style: a big "settings" title, a plain list of categories, plain text rows, square toggles, tilt-on-press and the "feather" slide-in. Switching home style reopens settings straight away in the new look.

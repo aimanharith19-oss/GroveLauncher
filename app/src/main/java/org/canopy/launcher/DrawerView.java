@@ -611,7 +611,7 @@ public class DrawerView extends FrameLayout {
         buildSections(items, q.isEmpty() && "az".equals(sort), listStart);
         if (!withWidgets && grid.isEditing()) grid.finishEdit();
         // While searching the grid is hidden (results show instead), so don't rebuild it on every keystroke.
-        if (q.isEmpty() || selecting) grid.setData(items, withWidgets ? widgets() : new ArrayList<DrawerGrid.W>(), Math.max(1, Prefs.drawerCols(c)), rowHeight());
+        if (q.isEmpty() || selecting) grid.setData(items, withWidgets ? widgets() : new ArrayList<DrawerGrid.W>(), cols(), rowHeight());
         empty.setText(q.isEmpty() ? (inTab != null ? "This tab is empty — long-press the tab to add apps" : "No apps")
                 : "No apps match “" + q + "”");
         empty.setVisibility(items.isEmpty() && q.isEmpty() ? VISIBLE : GONE);
@@ -669,6 +669,17 @@ public class DrawerView extends FrameLayout {
         Context c = getContext();
         boolean on = key.equals(tab);
         // Natural, easy-to-hit tabs: the current one is a soft accent pill with bold text, the others plain text.
+        if (Ui.wp(c)) { // Windows Phone pivot header: big light lowercase, the current one bright, the rest dim
+            TextView pv = Ui.text(c, name.toLowerCase(java.util.Locale.getDefault()), 30, on ? pal.text : Ui.alpha(pal.text, 0x66));
+            pv.setLetterSpacing(-0.02f);
+            pv.setPadding(Ui.dp(c, 8), Ui.dp(c, 2), Ui.dp(c, 8), Ui.dp(c, 2));
+            pv.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { tab = key; refresh(); revealList(); } });
+            if (!locked()) pv.setOnLongClickListener(new OnLongClickListener() {
+                @Override public boolean onLongClick(View v) { renameTab(key, g); return true; }
+            });
+            tabBar.addView(pv, new LinearLayout.LayoutParams(-2, -2));
+            return;
+        }
         TextView t = Ui.text(c, name, 15, on ? pal.accent : pal.subtext);
         t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", on ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL));
         t.setGravity(Gravity.CENTER);
@@ -728,9 +739,9 @@ public class DrawerView extends FrameLayout {
 
     private void buildFrequent() {
         frequent.removeAllViews();
-        boolean show = Prefs.drawerFrequent(getContext()) && search.length() == 0 && "az".equals(Prefs.drawerSort(getContext()))
+        boolean show = !Ui.wp(getContext()) && Prefs.drawerFrequent(getContext()) && search.length() == 0 && "az".equals(Prefs.drawerSort(getContext()))
                 && "all".equals(tab) && !selecting;
-        List<AppInfo> top = show ? AppRepository.get(getContext()).topUsed(Prefs.drawerCols(getContext())) : new ArrayList<AppInfo>();
+        List<AppInfo> top = show ? AppRepository.get(getContext()).topUsed(cols()) : new ArrayList<AppInfo>();
         frequent.setVisibility(top.size() >= 2 ? VISIBLE : GONE);
         if (top.size() < 2) return;
         for (AppInfo a : top) {
@@ -740,7 +751,7 @@ public class DrawerView extends FrameLayout {
             v.setTag(a);
             frequent.addView(v, new LinearLayout.LayoutParams(0, v.desiredHeight(), 1));
         }
-        for (int i = top.size(); i < Prefs.drawerCols(getContext()); i++) frequent.addView(new View(getContext()), new LinearLayout.LayoutParams(0, 1, 1));
+        for (int i = top.size(); i < cols(); i++) frequent.addView(new View(getContext()), new LinearLayout.LayoutParams(0, 1, 1));
     }
 
     // ------------------------------------------------------------------ multi-select
@@ -868,7 +879,7 @@ public class DrawerView extends FrameLayout {
     private List<DrawerGrid.W> allWidgets() {
         List<DrawerGrid.W> out = new ArrayList<>();
         AppWidgetManager awm = AppWidgetManager.getInstance(getContext());
-        int cols = Math.max(1, Prefs.drawerCols(getContext()));
+        int cols = cols();
         boolean migrated = false;
         Set<String> tabKeys = new HashSet<>(tabKeys());
         try {
@@ -930,7 +941,7 @@ public class DrawerView extends FrameLayout {
         DrawerGrid.W w = new DrawerGrid.W();
         w.id = id;
         w.tab = tab;
-        int cols = Math.max(1, Prefs.drawerCols(getContext()));
+        int cols = cols();
         int idx = indexOfKey(anchorKey);
         w.row = idx < 0 ? 0 : grid.rowOfItem(idx);
         w.col = 0;
@@ -1269,7 +1280,10 @@ public class DrawerView extends FrameLayout {
     /** Tallest the app area has been at this width: the keyboard (search) must not shrink the grid. */
     private int stableH, stableW;
 
+    private int cols() { return Ui.wp(getContext()) ? 1 : Math.max(1, Prefs.drawerCols(getContext())); }
+
     private int rowHeight() {
+        if (Ui.wp(getContext())) return Ui.dp(getContext(), 64);
         if (probeH < 0) probeH = new IconView(getContext(), launcher, IconView.STYLE_DRAWER).desiredHeight();
         int rows = Prefs.drawerRows(getContext());
         if (scroll.getWidth() != stableW) { stableW = scroll.getWidth(); stableH = 0; }
@@ -1284,7 +1298,7 @@ public class DrawerView extends FrameLayout {
         @Override public boolean onScaleBegin(ScaleGestureDetector d) { total = 1f; return true; }
         @Override public boolean onScale(ScaleGestureDetector d) {
             total *= d.getScaleFactor();
-            int cols = Prefs.drawerCols(getContext());
+            int cols = cols();
             int next = total > 1.25f ? cols - 1 : total < 0.8f ? cols + 1 : cols;
             next = Math.max(3, Math.min(8, next));
             if (next != cols) {

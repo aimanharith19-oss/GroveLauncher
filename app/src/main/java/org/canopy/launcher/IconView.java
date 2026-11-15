@@ -48,6 +48,9 @@ public class IconView extends View {
     private final TextPaint tp = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final Paint folderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final int iconSize;
+    /** Windows Phone app list: an accent tile with the icon, and the name beside it. */
+    private final boolean list;
+    private final Paint tilePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     /** Free-placed icons grow and shrink with their frame instead of stopping at the normal icon size. */
     public boolean freeSized;
     private final boolean showLabel;
@@ -91,6 +94,7 @@ public class IconView extends View {
         float scale = (style == STYLE_DRAWER ? Prefs.drawerIconScale(c) : Prefs.iconScale(c)) / 100f;
         int base = style == STYLE_GLANCE ? 44 : style == STYLE_FOLDER ? 50 : 52;
         iconSize = Math.round(Ui.dp(c, base) * scale);
+        list = style == STYLE_DRAWER && Ui.wp(c);
         showLabel = (style == STYLE_DRAWER && Prefs.drawerLabels(c)) || style == STYLE_FOLDER || style == STYLE_GLANCE
                 || (style == STYLE_HOME && Prefs.showLabels(c))
                 || (style == STYLE_DOCK && Prefs.sp(c).getBoolean("dock_labels", false));
@@ -179,6 +183,7 @@ public class IconView extends View {
     private float labelHeight() { return showLabel ? tp.descent() - tp.ascent() : 0; }
 
     public int desiredHeight() {
+        if (list) return Ui.dp(getContext(), 64);
         return iconSize + Ui.dp(getContext(), 14) + (showLabel ? Math.round(labelHeight()) + Ui.dp(getContext(), 4) : 0);
     }
 
@@ -189,7 +194,40 @@ public class IconView extends View {
         setMeasuredDimension(w, h);
     }
 
+    private void drawListRow(Canvas c) {
+        Context ctx = getContext();
+        int w = getWidth(), h = getHeight();
+        Ui.Palette pal = Ui.palette(ctx);
+        int tile = Math.min(h - Ui.dp(ctx, 10), Ui.dp(ctx, 52));
+        float tx = Ui.dp(ctx, 16), ty = (h - tile) / 2f;
+        tilePaint.setColor(android.graphics.Color.rgb((android.graphics.Color.red(pal.accent) * 6) / 10,
+                (android.graphics.Color.green(pal.accent) * 6) / 10, (android.graphics.Color.blue(pal.accent) * 6) / 10));
+        c.drawRect(tx, ty, tx + tile, ty + tile, tilePaint);
+        if (icon != null) {
+            float is = tile * 0.72f, ix = tx + (tile - is) / 2f, iy = ty + (tile - is) / 2f;
+            icon.setBounds((int) ix, (int) iy, (int) (ix + is), (int) (iy + is));
+            icon.draw(c);
+        }
+        if (label != null) {
+            tp.setColor(pal.text);
+            tp.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 22, ctx.getResources().getDisplayMetrics()));
+            tp.setTypeface(android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL));
+            float lx = tx + tile + Ui.dp(ctx, 16);
+            int avail = (int) (w - lx - Ui.dp(ctx, 16));
+            CharSequence t = TextUtils.ellipsize(label, tp, avail, TextUtils.TruncateAt.END);
+            c.drawText(t, 0, t.length(), lx, h / 2f - (tp.ascent() + tp.descent()) / 2f, tp);
+        }
+        int bc = "off".equals(badgeMode) ? 0 : badgeCount();
+        if (bc > 0) c.drawCircle(tx + tile - Ui.dp(ctx, 4), ty + Ui.dp(ctx, 4), Ui.dp(ctx, 5), badgePaint);
+        if (checkState == 1) {
+            checkPaint.setStyle(Paint.Style.FILL);
+            checkPaint.setColor(pal.accent);
+            c.drawRect(w - Ui.dp(ctx, 30), h / 2f - Ui.dp(ctx, 9), w - Ui.dp(ctx, 12), h / 2f + Ui.dp(ctx, 9), checkPaint);
+        }
+    }
+
     @Override protected void onDraw(Canvas c) {
+        if (list) { drawListRow(c); return; }
         int w = getWidth(), h = getHeight();
         float th = labelHeight();
         float gap = showLabel ? Ui.dp(getContext(), 4) : 0;

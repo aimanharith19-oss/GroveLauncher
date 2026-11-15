@@ -567,15 +567,18 @@ public class FeedPage extends LinearLayout {
         final boolean iconOnly = FeedWeb.prefs(c).getBoolean("web_icon_only", false) && !"feed".equals(id);
         boolean closable = !"feed".equals(id) && !iconOnly; // icon-only tabs close from the long-press menu
         chip.setPadding(Ui.dp(c, iconOnly ? 10 : 12), Ui.dp(c, 7), Ui.dp(c, iconOnly ? 10 : closable ? 6 : 14), Ui.dp(c, 7));
-        chip.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.surface, 0xF2) : Ui.alpha(pal.surface, 0x66), Ui.dp(c, 18)));
-        if (on) chip.setElevation(Ui.dp(c, 2));
+        final boolean pivot = Ui.wp(c);
+        if (!pivot) {
+            chip.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.surface, 0xF2) : Ui.alpha(pal.surface, 0x66), Ui.dp(c, 18)));
+            if (on) chip.setElevation(Ui.dp(c, 2));
+        }
         ImageView iv = new ImageView(c);
         if (favicon != null) iv.setImageBitmap(favicon);
         else if (iconRes != 0) iv.setImageDrawable(Ui.tinted(c, iconRes, on ? pal.accent : pal.text));
         else iv.setImageDrawable(letterIcon(label, on));
         chip.addView(iv, new LinearLayout.LayoutParams(Ui.dp(c, 18), Ui.dp(c, 18)));
-        TextView t = Ui.text(c, label, 14, pal.text);
-        t.setTypeface(Typeface.create("sans-serif-medium", on ? Typeface.BOLD : Typeface.NORMAL));
+        TextView t = Ui.text(c, pivot ? label.toLowerCase(java.util.Locale.getDefault()) : label, pivot ? 26 : 14, pivot && !on ? Ui.alpha(pal.text, 0x66) : pal.text);
+        if (!pivot) t.setTypeface(Typeface.create("sans-serif-medium", on ? Typeface.BOLD : Typeface.NORMAL));
         t.setSingleLine(true);
         t.setMaxWidth(Ui.dp(c, 120));
         t.setEllipsize(TextUtils.TruncateAt.END);
@@ -1172,14 +1175,16 @@ public class FeedPage extends LinearLayout {
         Context c = getContext();
         LinearLayout card = new LinearLayout(c);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackground(Ui.round(Ui.alpha(pal.surface, 0xEB), Ui.dp(c, 22)));
+        if (Ui.wp(c)) card.setBackgroundColor(android.graphics.Color.rgb((android.graphics.Color.red(pal.accent) * 3) / 10,
+                (android.graphics.Color.green(pal.accent) * 3) / 10, (android.graphics.Color.blue(pal.accent) * 3) / 10)); // accent-tinted tile
+        else card.setBackground(Ui.round(Ui.alpha(pal.surface, 0xEB), Ui.dp(c, 22)));
         int p = Ui.dp(c, 14);
         card.setPadding(p, Ui.dp(c, 6), Ui.dp(c, 4), p);
         LinearLayout head = new LinearLayout(c);
         head.setGravity(Gravity.CENTER_VERTICAL);
-        TextView t = Ui.text(c, labelOf(id).toUpperCase(), 12, pal.accent);
-        t.setTypeface(Typeface.DEFAULT_BOLD);
-        t.setLetterSpacing(0.08f);
+        final boolean wpc = Ui.wp(c);
+        TextView t = Ui.text(c, wpc ? labelOf(id).toLowerCase(java.util.Locale.getDefault()) : labelOf(id).toUpperCase(), wpc ? 20 : 12, wpc ? pal.text : pal.accent);
+        if (!wpc) { t.setTypeface(Typeface.DEFAULT_BOLD); t.setLetterSpacing(0.08f); }
         t.setSingleLine(true);
         t.setEllipsize(TextUtils.TruncateAt.END);
         head.addView(t, new LinearLayout.LayoutParams(0, -2, 1));

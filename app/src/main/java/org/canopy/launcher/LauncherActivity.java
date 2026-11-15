@@ -1462,6 +1462,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         feedBgColor = Prefs.feedColor(this);
     }
     private boolean feedShown;
+    private android.graphics.drawable.GradientDrawable wpBack;
     private int lastWindowBlur = -1, lastViewBlur = -1, lastChromeBlur = -1;
     private android.animation.ValueAnimator overlayAnim;
 
@@ -1494,7 +1495,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     private void applyDepth() {
         if (backdrop == null) return;
         updateWallMotion();
-        boolean blurOn = Prefs.sp(this).getBoolean("depth_blur", true);
+        boolean blurOn = Prefs.sp(this).getBoolean("depth_blur", true) && !winPhone();
         float amt = Math.max(feedAmt, overlayAmt);
         // feed background (Settings > Feed): dark blur, white blur or a plain colour
         int back;
@@ -1505,7 +1506,12 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         } else {
             back = android.graphics.Color.argb((int) (amt * (blurOn ? 120 : 150)), 0, 0, 0);
         }
-        backdrop.setBackgroundColor(back);
+        if (winPhone() && amt > 0f) { // Windows Phone: the accent glows from the top over black, the whole way down
+            int ac = Ui.palette(this).accent, o = Math.round(amt * 255);
+            if (wpBack == null) wpBack = new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, new int[3]);
+            wpBack.setColors(new int[]{Ui.alpha(ac, 0x61 * o / 255), Ui.alpha(ac, 0x18 * o / 255), Ui.alpha(0xFF000000, 0xF0 * o / 255)});
+            backdrop.setBackground(wpBack);
+        } else backdrop.setBackgroundColor(back);
         // a plain colour hides the wallpaper anyway: don't spend power blurring it
         if ("color".equals(feedBgMode)) amt = overlayAmt;
         updateBlurLayer(amt, blurOn);
