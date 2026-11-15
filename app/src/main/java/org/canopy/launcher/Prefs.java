@@ -106,7 +106,6 @@ public final class Prefs {
     /** The A–Z wave scroller beside the drawer. */
     public static boolean drawerAlphabet(Context c) { return sp(c).getBoolean("drawer_alphabet", false); }
 
-    /** "classic" (pages side by side, swipe up for the drawer) or "winphone" (pages top to bottom, swipe left for the app list). */
 
     // Look
     public static String theme(Context c) { return sp(c).getString("theme", "auto"); }
