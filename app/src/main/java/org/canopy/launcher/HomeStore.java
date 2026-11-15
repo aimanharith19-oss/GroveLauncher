@@ -37,7 +37,7 @@ public final class HomeStore {
 
     /** The classic and the Windows Phone home screens each keep their own icons and widgets. */
     public static synchronized HomeStore get(Context c) {
-        String name = "winphone".equals(Prefs.homeStyle(c)) ? "home_wp.json" : "home.json";
+        String name = "home.json";
         if (sInstance == null || !sInstance.file.getName().equals(name)) sInstance = new HomeStore(c.getApplicationContext(), name);
         return sInstance;
     }

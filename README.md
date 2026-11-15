@@ -28,6 +28,10 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.48.0
+- **Windows Phone style removed completely** (the home style option, floating button, sliding home screens, app list, pivot tabs and its settings look). The launcher is back to one classic design.
+- Faster: the colour palette is now built once instead of on every draw, and folder icons no longer read settings on every frame. Together with the earlier drawer fixes, scrolling and opening should be smoother.
+
 ### What's new in 1.47.1
 - Windows Phone style, much further: the **app drawer is now a Windows Phone app list** (accent-tinted square tile with the icon, big light name beside it), and its **tabs are pivot headers** (big light lowercase, the current one bright, the others dim).
 - The **feed** gets the accent-over-black tint all the way down, tinted tiles for cards with light lowercase titles, and pivot-style tabs. The home blur is off in this style.

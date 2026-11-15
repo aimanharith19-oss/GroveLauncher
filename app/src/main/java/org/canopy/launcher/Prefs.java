@@ -22,11 +22,6 @@ public final class Prefs {
     public static final String[] TRANSITIONS = {"slide", "cube", "stack", "zoom", "rotate", "flip"};
     public static final String[] TRANSITION_LABELS = {"Simple slide", "Cube", "Card stack", "Zoom", "Rotate down", "Flip"};
 
-    /** Windows Phone 8 accent colours. */
-    public static final int[] WP_ACCENTS = {0xFFA4C400, 0xFF60A917, 0xFF008A00, 0xFF00ABA9, 0xFF1BA1E2, 0xFF0050EF, 0xFF6A00FF,
-            0xFFAA00FF, 0xFFF472D0, 0xFFD80073, 0xFFA20025, 0xFFE51400, 0xFFFA6800, 0xFFF0A30A,
-            0xFFE3C800, 0xFF825A2C, 0xFF6D8764, 0xFF647687, 0xFF76608A, 0xFF87794E};
-
     public static final int[] ACCENTS = {0xFF4CAF7D, 0xFF2E9E6B, 0xFF26A69A, 0xFF1E88E5, 0xFF5C6BC0, 0xFF8E24AA,
             0xFFEC407A, 0xFFE53935, 0xFFFB8C00, 0xFFFFB300, 0xFF8D6E63, 0xFF78909C};
 
@@ -112,7 +107,6 @@ public final class Prefs {
     public static boolean drawerAlphabet(Context c) { return sp(c).getBoolean("drawer_alphabet", false); }
 
     /** "classic" (pages side by side, swipe up for the drawer) or "winphone" (pages top to bottom, swipe left for the app list). */
-    public static String homeStyle(Context c) { return sp(c).getString("home_style", "classic"); }
 
     // Look
     public static String theme(Context c) { return sp(c).getString("theme", "auto"); }
@@ -127,7 +121,7 @@ public final class Prefs {
                 return c.getColor(Ui.night(c) ? android.R.color.system_accent1_200 : android.R.color.system_accent1_600);
             } catch (Exception ignored) { }
         }
-        return sp(c).getInt("accent", Ui.wp(c) ? WP_ACCENTS[4] : ACCENTS[0]);
+        return sp(c).getInt("accent", ACCENTS[0]);
     }
 
     /** Hide apps that belong to a drawer tab from the "All" list. */

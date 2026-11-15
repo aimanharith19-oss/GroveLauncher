@@ -718,7 +718,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
         drawer = new DrawerView(this);
         root.addView(drawer, new FrameLayout.LayoutParams(-1, -1));
-        buildFab();
 
         root.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
             @SuppressWarnings("deprecation")
@@ -765,103 +764,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         workspace.setFeedBottom(0);          // the feed runs under the navigation bar, like the drawer
         if (feed != null) feed.setBottomInset(insetBottom);
         drawer.setInsets(insetTop, insetBottom);
-        fabHomeBottom = insetBottom + gap + bottomPill + dockH + Ui.dp(this, 10);
-        fabDrawerBottom = insetBottom + Ui.dp(this, 20);
-        updateFab(false);
     }
-
-    // ------------------------------------------------------------------ Windows Phone style
-
-    boolean winPhone() { return "winphone".equals(Prefs.homeStyle(this)); }
-
-    private FrameLayout fab;
-    private int fabHomeBottom, fabDrawerBottom, fabMargin;
-
-    private void buildFab() {
-        if (!winPhone()) return;
-        final Ui.Palette pal = Ui.palette(this);
-        fab = new FrameLayout(this);
-        final ImageView ic = new ImageView(this);
-        ic.setImageDrawable(Ui.tinted(this, R.drawable.ic_apps, pal.onAccent));
-        fab.addView(ic, new FrameLayout.LayoutParams(Ui.dp(this, 28), Ui.dp(this, 28), Gravity.CENTER));
-        fab.setTag(ic);
-        fab.setBackground(Ui.round(pal.accent, Ui.dp(this, 28)));
-        fab.setElevation(Ui.dp(this, 6));
-        fab.setContentDescription("Apps");
-        fabMargin = Ui.dp(this, 20);
-        root.addView(fab, new FrameLayout.LayoutParams(Ui.dp(this, 56), Ui.dp(this, 56), Gravity.BOTTOM | Gravity.START));
-        final float slop = Ui.dp(this, 10);
-        fab.setOnTouchListener(new View.OnTouchListener() {
-            float dx, dy;
-            boolean longed, moved;
-            final Runnable longRun = new Runnable() { @Override public void run() { longed = true; fab.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS); pickFabApp(); } };
-            @Override public boolean onTouch(View v, MotionEvent e) {
-                switch (e.getActionMasked()) {
-                    case MotionEvent.ACTION_DOWN: dx = e.getRawX(); dy = e.getRawY(); longed = moved = false; fab.postDelayed(longRun, 550); return true;
-                    case MotionEvent.ACTION_MOVE:
-                        if (Math.abs(e.getRawX() - dx) > slop || Math.abs(e.getRawY() - dy) > slop) { moved = true; fab.removeCallbacks(longRun); }
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        fab.removeCallbacks(longRun);
-                        if (longed || e.getActionMasked() == MotionEvent.ACTION_CANCEL) return true;
-                        if (moved) {
-                            if (e.getRawY() - dy < -Ui.dp(LauncherActivity.this, 36) && !drawer.isOpen()) launchFabApp();
-                        } else if (drawer.isOpen()) drawer.close(true);
-                        else drawer.open(false);
-                        return true;
-                }
-                return true;
-            }
-        });
-        updateFab(false);
-    }
-
-    /** At home: bottom right, opens the app list. In the app list: bottom left, goes back home. */
-    void updateFab(boolean animate) {
-        if (fab == null || root == null) return;
-        try { updateFabNow(animate); } catch (Throwable ignored) { }
-    }
-
-    private void updateFabNow(boolean animate) {
-        boolean open = drawer != null && drawer.isOpen();
-        ((ImageView) fab.getTag()).setImageDrawable(Ui.tinted(this, open ? R.drawable.ic_home : R.drawable.ic_apps, Ui.palette(this).onAccent));
-        fab.setContentDescription(open ? "Home" : "Apps");
-        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) fab.getLayoutParams();
-        lp.leftMargin = insetLeft + fabMargin;
-        lp.bottomMargin = fabHomeBottom;
-        fab.setLayoutParams(lp);
-        // home: bottom right; app list: bottom left
-        float rw = root.getWidth() > 0 ? root.getWidth() : getResources().getDisplayMetrics().widthPixels;
-        float tx = open ? 0 : rw - fab.getLayoutParams().width - 2 * fabMargin - insetLeft - insetRight;
-        float ty = open ? fabHomeBottom - fabDrawerBottom : 0;
-        if (!animate) { fab.setTranslationX(tx); fab.setTranslationY(ty); return; }
-        fab.animate().translationX(tx).translationY(ty).setDuration(Anim.dur(this, 260)).setInterpolator(Anim.open(this)).start();
-    }
-
-    private void launchFabApp() {
-        String v = Prefs.sp(this).getString("wp_fab_app", "");
-        String[] sw = v.split("#");
-        AppInfo a = sw.length == 2 ? repo.find(sw[0], Long.parseLong(sw[1])) : null;
-        if (a != null) repo.launch(a, fab);
-        else Ui.toast(this, "Long-press the button to choose the app that opens when you swipe up on it");
-    }
-
-    private void pickFabApp() {
-        final List<AppInfo> apps = repo.visible();
-        String[] labels = new String[apps.size() + 1];
-        labels[0] = "None";
-        for (int i = 0; i < apps.size(); i++) labels[i + 1] = apps.get(i).label;
-        Ui.dialog(this).setTitle("Swipe up on the button opens\u2026")
-                .setItems(labels, new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface d, int w) {
-                        Prefs.sp(LauncherActivity.this).edit().putString("wp_fab_app",
-                                w == 0 ? "" : apps.get(w - 1).component.flattenToString() + "#" + apps.get(w - 1).serial).apply();
-                    }
-                }).show();
-    }
-
-    @Override public void onSwipeLeftEnd() { drawer.open(false); }
 
     private int glanceOffset() { return feed != null ? 1 : 0; }
     /** The "main" home page Home returns to (chosen by you). */
@@ -986,7 +889,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         }
         indicator.setup(workspace.getChildCount(), feed != null, defaultPage());
         indicator.setPosition(workspace.getCurrentPage());
-        if (winPhone()) indicator.setVisibility(View.GONE);
         drawer.refresh();
     }
 
@@ -1413,7 +1315,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (wall3d != null) wall3d.setPage(pageFloat / Math.max(1f, workspace.getChildCount() - 1));
         if (feed == null) return;
         feedAmt = Math.max(0f, Math.min(1f, 1f - pageFloat));
-        if (fab != null) { fab.setAlpha(1f - feedAmt); fab.setVisibility(feedAmt > 0.95f ? View.INVISIBLE : View.VISIBLE); }
         // a new motivating line each time you arrive on the feed
         if (pageFloat < 0.02f && !feedArrived) { feedArrived = true; feed.onShown(); }
         else if (pageFloat > 0.6f) feedArrived = false;
@@ -1462,14 +1363,12 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         feedBgColor = Prefs.feedColor(this);
     }
     private boolean feedShown;
-    private android.graphics.drawable.GradientDrawable wpBack;
     private int lastWindowBlur = -1, lastViewBlur = -1, lastChromeBlur = -1;
     private android.animation.ValueAnimator overlayAnim;
 
     /** Animates the "something is open over home" depth effect. */
     public void setOverlay(boolean on) {
         root.postDelayed(new Runnable() { @Override public void run() { try { applyStatusBar(); } catch (Throwable ignored) { } } }, Anim.dur(this, 340));
-        root.post(new Runnable() { @Override public void run() { updateFab(true); } });
         if (overlayAnim != null) overlayAnim.cancel();
         overlayAnim = android.animation.ValueAnimator.ofFloat(overlayAmt, on ? 1f : 0f);
         overlayAnim.setDuration(Anim.dur(this, on ? 320 : 240));
@@ -1495,7 +1394,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     private void applyDepth() {
         if (backdrop == null) return;
         updateWallMotion();
-        boolean blurOn = Prefs.sp(this).getBoolean("depth_blur", true) && !winPhone();
+        boolean blurOn = Prefs.sp(this).getBoolean("depth_blur", true);
         float amt = Math.max(feedAmt, overlayAmt);
         // feed background (Settings > Feed): dark blur, white blur or a plain colour
         int back;
@@ -1506,12 +1405,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         } else {
             back = android.graphics.Color.argb((int) (amt * (blurOn ? 120 : 150)), 0, 0, 0);
         }
-        if (winPhone() && amt > 0f) { // Windows Phone: the accent glows from the top over black, the whole way down
-            int ac = Ui.palette(this).accent, o = Math.round(amt * 255);
-            if (wpBack == null) wpBack = new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, new int[3]);
-            wpBack.setColors(new int[]{Ui.alpha(ac, 0x61 * o / 255), Ui.alpha(ac, 0x18 * o / 255), Ui.alpha(0xFF000000, 0xF0 * o / 255)});
-            backdrop.setBackground(wpBack);
-        } else backdrop.setBackgroundColor(back);
+        backdrop.setBackgroundColor(back);
         // a plain colour hides the wallpaper anyway: don't spend power blurring it
         if ("color".equals(feedBgMode)) amt = overlayAmt;
         updateBlurLayer(amt, blurOn);
@@ -1537,7 +1431,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                     ? android.graphics.RenderEffect.createBlurEffect(wb, wb, android.graphics.Shader.TileMode.CLAMP) : null);
         }
         // Blur the home screen itself behind the drawer / folders / widget page.
-        int vb = blurOn && !winPhone() ? Math.round(overlayAmt * 5f) * Ui.dp(this, 22) / 5 : 0; // no per-frame re-blur (it froze the drawer animation)
+        int vb = blurOn ? Math.round(overlayAmt * 5f) * Ui.dp(this, 22) / 5 : 0; // stepped, so it isn't re-blurred every frame
         if (vb != lastViewBlur) {
             lastViewBlur = vb;
             android.graphics.RenderEffect fx = vb > 0

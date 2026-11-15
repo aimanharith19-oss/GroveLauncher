@@ -30,15 +30,13 @@ public class Workspace extends ViewGroup {
         void onDoubleTap();
         void onPinchIn();
         void onPinchOut();
-        /** Windows Phone style: swiped left past the last page of the home screen (opens the app list). */
-        void onSwipeLeftEnd();
         void onEmptyLongPress(float rawX, float rawY);
         void onPageScrolled(float pageFloat);
         boolean isDragging();
         boolean isGlancePage(int index);
     }
 
-    private static final int NONE = 0, HORIZ = 1, VERT = 2, PINCH = 3, VSCROLL = 4;
+    private static final int NONE = 0, HORIZ = 1, VERT = 2, PINCH = 3;
 
     private final Callbacks cb;
     private final OverScroller scroller;
@@ -53,10 +51,7 @@ public class Workspace extends ViewGroup {
     private float pinchScale = 1f;
     private final WallpaperManager wm;
     private final boolean wallpaperScroll, infinite;
-    /** Windows Phone style: home screens stack top to bottom (slide down); the feed stays one swipe to the right. */
-    private final boolean vertical;
     private float lastY;
-    private int lastHome, homeY;
     private final String transition;
     private float twoStartY, twoLastY;
     private boolean twoTracking;
@@ -74,9 +69,8 @@ public class Workspace extends ViewGroup {
         maxFling = vc.getScaledMaximumFlingVelocity();
         swipeDist = Ui.dp(c, 56);
         wm = WallpaperManager.getInstance(c);
-        vertical = "winphone".equals(Prefs.sp(c).getString("home_style", "classic"));
-        wallpaperScroll = Prefs.wallpaperScroll(c) && !vertical;
-        infinite = Prefs.infiniteScroll(c) && !vertical;
+        wallpaperScroll = Prefs.wallpaperScroll(c);
+        infinite = Prefs.infiniteScroll(c);
         transition = Prefs.transition(c);
         setHapticFeedbackEnabled(true);
         setChildrenDrawingOrderEnabled(true);
@@ -134,39 +128,27 @@ public class Workspace extends ViewGroup {
         int w = r - l;
         for (int i = 0; i < getChildCount(); i++) {
             View v = getChildAt(i);
-            int left = (vertical ? Math.min(i, glanceN()) : i) * w + getPaddingLeft();
-            int top = getPaddingTop() + (vertical && i >= glanceN() ? (i - glanceN()) * (b - t) : 0);
-            v.layout(left, top, left + v.getMeasuredWidth(), top + v.getMeasuredHeight());
+            int left = i * w + getPaddingLeft();
+            v.layout(left, getPaddingTop(), left + v.getMeasuredWidth(), getPaddingTop() + v.getMeasuredHeight());
         }
-        if (scroller.isFinished() && mode != HORIZ && mode != VSCROLL) scrollTo(pageX(current), pageY(current));
+        if (scroller.isFinished() && mode != HORIZ) scrollTo(current * getWidth(), 0);
         updateWallpaperOffsets();
     }
 
-    private int glanceN() { return cb.isGlancePage(0) ? 1 : 0; }
-    private int pageX(int p) { return (vertical ? Math.min(p, glanceN()) : p) * getWidth(); }
-    private int pageY(int p) {
-        if (!vertical || p < glanceN()) return 0;
-        return p == current ? Math.max(0, Math.min(maxY(), homeY)) : (p - glanceN()) * getHeight();
-    }
-    private int maxX() { return vertical ? glanceN() * getWidth() : Math.max(0, (getChildCount() - 1) * getWidth()); }
-    private int maxY() { return vertical ? Math.max(0, (getChildCount() - glanceN() - 1) * getHeight()) : 0; }
-
     public void setCurrentPageImmediate(int p) {
         current = clampPage(p);
-        if (current >= glanceN()) lastHome = current;
         scroller.forceFinished(true);
-        if (getWidth() > 0) scrollTo(pageX(current), pageY(current));
+        if (getWidth() > 0) scrollTo(current * getWidth(), 0);
         else requestLayout();
     }
 
     public void snapToPage(int p) {
         p = clampPage(p);
-        int dx = pageX(p) - getScrollX(), dy = pageY(p) - getScrollY();
+        int dx = p * getWidth() - getScrollX();
         current = p;
-        if (p >= glanceN()) lastHome = p;
-        int dist = Math.max(Math.abs(dx), Math.abs(dy));
+        int dist = Math.abs(dx);
         int dur = (int) Anim.dur(getContext(), Anim.fluid(getContext()) ? Math.min(560, 300 + dist / 3) : Math.min(420, 180 + dist / 3));
-        scroller.startScroll(getScrollX(), getScrollY(), dx, dy, dur);
+        scroller.startScroll(getScrollX(), 0, dx, 0, dur);
         postInvalidateOnAnimation();
     }
 
@@ -183,11 +165,6 @@ public class Workspace extends ViewGroup {
         super.onScrollChanged(l, t, ol, ot);
         int w = getWidth();
         if (w <= 0) return;
-        if (vertical && l >= maxX() && w > 0 && getHeight() > 0) { // one seamless column: the page is simply where you are
-            homeY = t;
-            current = clampPage(glanceN() + Math.round(t / (float) getHeight()));
-            lastHome = current;
-        }
         cb.onPageScrolled(l / (float) w);
         applyTransition();
         int n = getChildCount();
@@ -278,7 +255,7 @@ public class Workspace extends ViewGroup {
                 }
                 continue;
             }
-            if (vertical || "slide".equals(transition()) || Math.abs(off) >= 1f || off == 0f) continue;
+            if ("slide".equals(transition()) || Math.abs(off) >= 1f || off == 0f) continue;
             float vw = v.getWidth(), vh = v.getHeight();
             switch (transition()) {
                 case "cube":
@@ -383,7 +360,7 @@ public class Workspace extends ViewGroup {
             float dx = ev.getX() - downX, dy = ev.getY() - downY;
             int dir = classify(dx, dy);
             if (dir == VERT) {
-                mode = vertical && getChildCount() - glanceN() > 1 ? VSCROLL : VERT;
+                mode = VERT;
                 lastY = ev.getY();
                 return true;
             }
@@ -448,21 +425,14 @@ public class Workspace extends ViewGroup {
                         mode = HORIZ;
                         lastX = ev.getX();
                     } else if (dir == VERT) {
-                        mode = vertical && getChildCount() - glanceN() > 1 ? VSCROLL : VERT;
+                        mode = VERT;
                         lastY = ev.getY();
                     }
-                }
-                if (mode == VSCROLL) {
-                    float d = lastY - ev.getY();
-                    lastY = ev.getY();
-                    int ny = getScrollY() + (int) d;
-                    if (ny < 0 || ny > maxY()) ny = getScrollY() + (int) (d * 0.3f);
-                    scrollTo(getScrollX(), ny);
                 }
                 if (mode == HORIZ) {
                     float d = lastX - ev.getX();
                     lastX = ev.getX();
-                    int max = maxX();
+                    int max = Math.max(0, (getChildCount() - 1) * getWidth());
                     int nx = getScrollX() + (int) d;
                     if (nx < 0 || nx > max) nx = getScrollX() + (int) (d * 0.3f);
                     scrollTo(nx, 0);
@@ -470,31 +440,10 @@ public class Workspace extends ViewGroup {
                 break;
             }
             case MotionEvent.ACTION_UP: {
-                if (mode == VSCROLL) {
-                    vt.computeCurrentVelocity(1000, maxFling);
-                    float vy = vt.getYVelocity(), dy = ev.getY() - downY;
-                    int g = glanceN(), last = getChildCount() - 1;
-                    int y = getScrollY(), edge = Ui.dp(getContext(), 24);
-                    boolean top = (dy > swipeDist || vy > minFling) && y <= edge, bottom = (dy < -swipeDist || vy < -minFling) && y >= maxY() - edge;
-                    if (y < 0 || y > maxY() || top || bottom) {
-                        scroller.startScroll(getScrollX(), y, 0, Math.max(0, Math.min(maxY(), y)) - y, 200);
-                        postInvalidateOnAnimation();
-                        if (top) cb.onSwipeDown();            // pulled down at the very top: notifications
-                        else if (bottom) cb.onSwipeUp(downX, downY); // pushed up at the very bottom
-                    } else {
-                        scroller.fling(getScrollX(), y, 0, (int) -vy, getScrollX(), getScrollX(), 0, maxY()); // free scroll, no snapping
-                        postInvalidateOnAnimation();
-                    }
-                } else if (mode == HORIZ) {
+                if (mode == HORIZ) {
                     vt.computeCurrentVelocity(1000, maxFling);
                     float v = vt.getXVelocity();
                     float pos = getScrollX() / (float) Math.max(1, getWidth());
-                    if (vertical && current >= glanceN() && (getScrollX() - maxX() > getWidth() * 0.12f || (v < -minFling && getScrollX() >= maxX()))) {
-                        snapToPage(current);
-                        cb.onSwipeLeftEnd();    // past the end of the home screen: the app list
-                        resetTracking();
-                        break;
-                    }
                     int target;
                     if (v < -minFling) target = (int) Math.floor(pos) + 1;
                     else if (v > minFling) target = (int) Math.ceil(pos) - 1;
@@ -502,7 +451,6 @@ public class Workspace extends ViewGroup {
                     int n = getChildCount();
                     if (infinite && n > 1 && target >= n && pos > n - 1.08f) target = cb.isGlancePage(0) ? 1 : 0;
                     else if (infinite && n > 1 && target < 0 && pos < 0.08f) target = n - 1;
-                    if (vertical) target = target < glanceN() ? 0 : Math.max(glanceN(), lastHome);
                     snapToPage(target);
                 } else if (mode == VERT) {
                     vt.computeCurrentVelocity(1000, maxFling);
@@ -515,7 +463,7 @@ public class Workspace extends ViewGroup {
                 break;
             }
             case MotionEvent.ACTION_CANCEL:
-                if (mode == HORIZ || mode == VSCROLL) snapToPage(current);
+                if (mode == HORIZ) snapToPage(current);
                 resetTracking();
                 break;
         }

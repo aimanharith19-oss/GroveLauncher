@@ -60,9 +60,8 @@ public class SettingsActivity extends Activity {
             return;
         }
         // Like the feed: the wallpaper shows through, blurred and tinted.
-        wp = Ui.wp(this);
         boolean blur = false;
-        if (!wp && android.os.Build.VERSION.SDK_INT >= 31) {
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
             try {
                 if (getWindowManager().isCrossWindowBlurEnabled()) { getWindow().setBackgroundBlurRadius(Ui.dp(this, 40)); blur = true; }
             } catch (Throwable ignored) { }
@@ -84,36 +83,17 @@ public class SettingsActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        if (wp) { // black with the accent glowing from the top, like Grove Music
-            android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable(
-                    android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-                    new int[]{Ui.alpha(pal.accent, 0x61), Ui.alpha(pal.accent, 0x18), 0xFF000000});
-            root.setBackground(g);
-        } else root.setBackgroundColor(Ui.alpha(pal.bg, blur ? 0xB0 : 0xE0));
+        root.setBackgroundColor(Ui.alpha(pal.bg, blur ? 0xB0 : 0xE0));
 
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 4));
-        if (wp) {
-            bar.setOrientation(LinearLayout.VERTICAL);
-            bar.setGravity(Gravity.START);
-            bar.setPadding(Ui.dp(this, 20), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 6));
-            TextView app = Ui.text(this, "GROVE LAUNCHER", 12, pal.text);
-            app.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-            app.setLetterSpacing(0.08f);
-            bar.addView(app);
-            titleView = Ui.text(this, "settings", 56, pal.text);
-            titleView.setSingleLine(true);
-            titleView.setLetterSpacing(-0.03f);
-            bar.addView(titleView);
-        } else {
-            bar.addView(Ui.iconButton(this, R.drawable.ic_back, pal.text, new View.OnClickListener() {
-                @Override public void onClick(View v) { onBackPressed(); }
-            }), new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
-            titleView = Ui.text(this, "Grove settings", 28, pal.text);
-            titleView.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
-            bar.addView(titleView);
-        }
+        bar.addView(Ui.iconButton(this, R.drawable.ic_back, pal.text, new View.OnClickListener() {
+            @Override public void onClick(View v) { onBackPressed(); }
+        }), new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
+        titleView = Ui.text(this, "Grove settings", 28, pal.text);
+        titleView.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        bar.addView(titleView);
         root.addView(bar);
 
         searchField = new EditText(this);
@@ -159,7 +139,6 @@ public class SettingsActivity extends Activity {
     }
 
     // Nova-style navigation: a main page of categories, each opening its own page.
-    private boolean wp;
     private String page;
     private String query = "";
     private TextView titleView;
@@ -216,26 +195,6 @@ public class SettingsActivity extends Activity {
 
     /** The main page: a two-column grid of big tiles, each with its own colour, so a category is found at a glance. */
     private void buildMain() {
-        if (wp) {
-            for (final String[] cat : CATEGORIES) {
-                LinearLayout it = new LinearLayout(this);
-                it.setOrientation(LinearLayout.VERTICAL);
-                it.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
-                TextView t = Ui.text(this, cat[0].replace(" (swipe right from home)", "").toLowerCase(java.util.Locale.ROOT), 30, pal.text);
-                t.setLetterSpacing(-0.02f);
-                it.addView(t);
-                TextView sb = Ui.text(this, cat[1], 13, pal.subtext);
-                sb.setMaxLines(2);
-                it.addView(sb);
-                final String name = cat[0];
-                it.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { page = name; build(); } });
-                tilt(it);
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-                lp.topMargin = Ui.dp(this, 6);
-                list.addView(it, lp);
-            }
-            return;
-        }
         for (int i = 0; i < CATEGORIES.length; i += 2) {
             LinearLayout row = new LinearLayout(this);
             row.setBaselineAligned(false);
@@ -310,17 +269,6 @@ public class SettingsActivity extends Activity {
 
     /** Android 12+-style grouped cards: neighbouring rows share one rounded card. */
     private void groupRows() {
-        if (wp) { // flat rows on the black page: no cards
-            for (int i = 0; i < list.getChildCount(); i++) {
-                View v = list.getChildAt(i);
-                if (!(v.getTag() instanceof String)) continue;
-                v.setBackground(null);
-                v.setMinimumHeight(Ui.dp(this, 56));
-                v.setPadding(Ui.dp(this, 8), Ui.dp(this, 10), Ui.dp(this, 8), Ui.dp(this, 10));
-                tilt(v);
-            }
-            return;
-        }
         float big = Ui.dp(this, 24), small = Ui.dp(this, 5);
         int n = list.getChildCount();
         for (int i = 0; i < n; i++) {
@@ -382,13 +330,11 @@ public class SettingsActivity extends Activity {
     private void build() {
         list.removeAllViews();
         sections.clear();
-        String ttl = page == null ? (wp ? "settings" : "Grove settings") : page.replace(" (swipe right from home)", "");
-        titleView.setText(wp ? ttl.toLowerCase(java.util.Locale.ROOT) : ttl);
+        titleView.setText(page == null ? "Grove settings" : page.replace(" (swipe right from home)", ""));
         searchField.setVisibility(page == null ? View.VISIBLE : View.GONE);
         if (page == null && query.isEmpty()) {
             buildMain();
             addCrashRows();
-            feather();
             return;
         }
         try {
@@ -400,40 +346,6 @@ public class SettingsActivity extends Activity {
             err.setPadding(Ui.dp(this, 8), Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 16));
             list.addView(err);
         }
-        feather();
-    }
-
-    /** Windows Phone "feather": rows glide in from the right, one after another. */
-    private void feather() {
-        if (!wp || Anim.minimal(this)) return;
-        int n = Math.min(list.getChildCount(), 14);
-        for (int i = 0; i < n; i++) {
-            View v = list.getChildAt(i);
-            v.setAlpha(0f);
-            v.setTranslationX(Ui.dp(this, 90));
-            v.animate().alpha(1f).translationX(0).setStartDelay(i * 35L).setDuration(420)
-                    .setInterpolator(new android.view.animation.PathInterpolator(0.1f, 0.9f, 0.2f, 1f)).start();
-        }
-    }
-
-    /** Windows Phone "tilt": the row tips toward the finger while pressed. */
-    private void tilt(final View v) {
-        v.setOnTouchListener(new View.OnTouchListener() {
-            @Override public boolean onTouch(View view, android.view.MotionEvent e) {
-                switch (e.getActionMasked()) {
-                    case android.view.MotionEvent.ACTION_DOWN:
-                        view.setPivotX(e.getX()); view.setPivotY(e.getY());
-                        view.animate().scaleX(0.965f).scaleY(0.965f).setDuration(90).start();
-                        break;
-                    case android.view.MotionEvent.ACTION_UP:
-                    case android.view.MotionEvent.ACTION_CANCEL:
-                        view.animate().scaleX(1f).scaleY(1f).setDuration(260).start();
-                        break;
-                    default: break;
-                }
-                return false;
-            }
-        });
     }
 
     private void addCrashRows() {
@@ -472,10 +384,6 @@ public class SettingsActivity extends Activity {
         toggle("Page indicator", "page_indicator", true);
         toggle("Scroll wallpaper with pages", "wallpaper_scroll", true);
         choice("Search bar", "search_bar", new String[]{"bottom", "top", "none"}, new String[]{"Above the dock", "Top of screen", "Hidden"}, "bottom");
-        choice("Home screen style", "home_style", new String[]{"classic", "winphone"},
-                new String[]{"Classic (screens side by side, swipe up for apps)", "Windows Phone (screens slide down, swipe left for apps, floating button)"}, "classic");
-        if ("winphone".equals(Prefs.homeStyle(this))) info("Windows Phone style: swipe left on the home screen (or tap the floating button) for apps; swipe right to leave them. "
-                + "Swipe up on the floating button opens an app \u2014 long-press the button to choose which.");
         toggle("Place icons freely (move and resize like widgets)", "icon_free", false);
         toggle("Hide status bar on the home screen", "hide_bar_home", Prefs.hideStatusBar(this));
         toggle("Hide status bar on the feed", "hide_bar_feed", Prefs.hideStatusBar(this));
@@ -751,9 +659,9 @@ public class SettingsActivity extends Activity {
 
     private void header(String t) {
         sections.add(new Object[]{list.getChildCount(), t});
-        TextView h = Ui.text(this, wp ? t.toLowerCase(java.util.Locale.ROOT) : t, wp ? 22 : 14, pal.accent);
-        if (!wp) h.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        h.setPadding(Ui.dp(this, 8), Ui.dp(this, wp ? 26 : 22), 0, Ui.dp(this, 6));
+        TextView h = Ui.text(this, t, 14, pal.accent);
+        h.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        h.setPadding(Ui.dp(this, 8), Ui.dp(this, 22), 0, Ui.dp(this, 6));
         list.addView(h);
     }
 
@@ -810,11 +718,10 @@ public class SettingsActivity extends Activity {
         ic.setBackground(Ui.round(Ui.alpha(tint, 0x2A), Ui.dp(this, 20)));
         LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(Ui.dp(this, 38), Ui.dp(this, 38));
         ilp.rightMargin = Ui.dp(this, 12);
-        if (wp) ic.setVisibility(View.GONE); // Windows Phone settings are plain text
         r.addView(ic, ilp);
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        col.addView(Ui.text(this, title, wp ? 20 : 16, pal.text));
+        col.addView(Ui.text(this, title, 16, pal.text));
         if (!TextUtils.isEmpty(summary)) {
             TextView s = Ui.text(this, summary, 13, pal.subtext);
             s.setTag("summary");
@@ -831,11 +738,11 @@ public class SettingsActivity extends Activity {
 
     private void toggle(String title, final String key, boolean def) {
         LinearLayout r = row(title, null);
-        final android.widget.CompoundButton sw = wp ? new WpSwitch(this, pal.accent) : new Switch(this);
+        final Switch sw = new Switch(this);
         sw.setChecked(sp.getBoolean(key, def));
-        if (!wp && android.os.Build.VERSION.SDK_INT < 31) { // Android 12+ draws its own Material You switch
-            ((Switch) sw).setThumbTintList(new ColorStateList(new int[][]{{android.R.attr.state_checked}, {}}, new int[]{pal.accent, 0xFFBDBDBD}));
-            ((Switch) sw).setTrackTintList(new ColorStateList(new int[][]{{android.R.attr.state_checked}, {}}, new int[]{Ui.alpha(pal.accent, 0x80), 0x55888888}));
+        if (android.os.Build.VERSION.SDK_INT < 31) { // Android 12+ draws its own Material You switch
+            sw.setThumbTintList(new ColorStateList(new int[][]{{android.R.attr.state_checked}, {}}, new int[]{pal.accent, 0xFFBDBDBD}));
+            sw.setTrackTintList(new ColorStateList(new int[][]{{android.R.attr.state_checked}, {}}, new int[]{Ui.alpha(pal.accent, 0x80), 0x55888888}));
         }
         sw.setClickable(false);
         r.addView(sw);
@@ -931,7 +838,7 @@ public class SettingsActivity extends Activity {
                             @Override public void onClick(DialogInterface d, int which) {
                                 sp.edit().putString(key, values[which]).apply();
                                 d.dismiss();
-                                if ("theme".equals(key) || "home_style".equals(key)) { recreate(); return; }
+                                if ("theme".equals(key)) { recreate(); return; }
                                 build();
                             }
                         }).show();
@@ -1122,10 +1029,10 @@ public class SettingsActivity extends Activity {
         g.setPadding(p, p, p, p);
         final android.app.AlertDialog[] dlg = new android.app.AlertDialog[1];
         int size = Ui.dp(this, 52);
-        for (final int color : Ui.wp(this) ? Prefs.WP_ACCENTS : Prefs.ACCENTS) {
+        for (final int color : Prefs.ACCENTS) {
             View v = new View(this);
             GradientDrawable d = new GradientDrawable();
-            d.setShape(Ui.wp(this) ? GradientDrawable.RECTANGLE : GradientDrawable.OVAL);
+            d.setShape(GradientDrawable.OVAL);
             d.setColor(color);
             if (color == Prefs.accent(this)) d.setStroke(Ui.dp(this, 4), pal.text);
             v.setBackground(d);
@@ -1310,32 +1217,4 @@ public class SettingsActivity extends Activity {
 
     @SuppressWarnings("unused")
     private static Context unused(Context c) { return c; }
-
-    /** Windows Phone toggle: a square outlined track that fills with the accent, with a block thumb. */
-    private static final class WpSwitch extends android.widget.CompoundButton {
-        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-        private final int accent;
-        WpSwitch(Context c, int accent) {
-            super(c);
-            this.accent = accent;
-            setButtonDrawable(null);
-            setBackground(null);
-        }
-        @Override protected void onMeasure(int w, int h) { setMeasuredDimension(Ui.dp(getContext(), 58), Ui.dp(getContext(), 28)); }
-        @Override protected void onDraw(android.graphics.Canvas c) {
-            float d = getResources().getDisplayMetrics().density, bw = 2 * d;
-            float tl = bw / 2, tt = 4 * d, tr = getWidth() - bw / 2, tb = getHeight() - 4 * d;
-            boolean on = isChecked();
-            paint.setStyle(android.graphics.Paint.Style.STROKE);
-            paint.setStrokeWidth(bw);
-            paint.setColor(on ? accent : 0xFFFFFFFF);
-            c.drawRect(tl, tt, tr, tb, paint);
-            paint.setStyle(android.graphics.Paint.Style.FILL);
-            if (on) c.drawRect(tl + 3 * d, tt + 3 * d, tr - 3 * d, tb - 3 * d, paint);
-            paint.setColor(0xFFFFFFFF);
-            float tw = 10 * d;
-            float x = on ? tr - tw - 1 * d : tl + 1 * d;
-            c.drawRect(x, 1 * d, x + tw, getHeight() - 1 * d, paint);
-        }
-    }
 }

@@ -28,12 +28,18 @@ public class App extends Application {
 
     public static App get() { return sInstance; }
 
+    // a strong reference: SharedPreferences only holds its listeners weakly
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener prefListener =
+            new android.content.SharedPreferences.OnSharedPreferenceChangeListener() {
+                @Override public void onSharedPreferenceChanged(android.content.SharedPreferences sp, String key) { Ui.clearPaletteCache(); }
+            };
+
     @Override public void onCreate() {
         super.onCreate();
         sInstance = this;
-        Ui.wp(this);
         if (CrashLog.isCrashProcess(this)) return; // the crash screen runs on its own, bare
         CrashLog.install(this);
+        Prefs.sp(this).registerOnSharedPreferenceChangeListener(prefListener);
         KeepAliveService.sync(this);
         registerReceiver(new android.content.BroadcastReceiver() {
             @Override public void onReceive(android.content.Context c, android.content.Intent i) { AppLock.relock(); }

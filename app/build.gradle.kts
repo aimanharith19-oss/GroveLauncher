@@ -10,8 +10,8 @@ android {
         applicationId = "org.canopy.launcher"
         minSdk = 26
         targetSdk = 34
-        versionCode = 94
-        versionName = "1.47.1"
+        versionCode = 95
+        versionName = "1.48.0"
     }
 
     // Signed with your own key when KEYSTORE_FILE is set (the GitHub workflow does this from repository secrets);

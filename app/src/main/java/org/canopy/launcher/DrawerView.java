@@ -94,11 +94,7 @@ public class DrawerView extends FrameLayout {
         launcher = c;
         pal = Ui.palette(c);
         slop = ViewConfiguration.get(c).getScaledTouchSlop();
-        if (Ui.wp(c)) { // black with the accent glowing from the top, like Grove Music
-            int o = Math.round(Prefs.drawerOpacity(c) * 2.55f);
-            setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-                    new int[]{Ui.alpha(pal.accent, 0x61 * o / 255), Ui.alpha(pal.accent, 0x18 * o / 255), Ui.alpha(0xFF000000, o)}));
-        } else setBackgroundColor(Ui.alpha(pal.bg, Math.round(Prefs.drawerOpacity(c) * 2.55f)));
+        setBackgroundColor(Ui.alpha(pal.bg, Math.round(Prefs.drawerOpacity(c) * 2.55f)));
 
         content = new LinearLayout(c);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -125,7 +121,7 @@ public class DrawerView extends FrameLayout {
         search.setTextColor(pal.text);
         search.setHintTextColor(pal.subtext);
         search.setTextSize(15);
-        search.setTypeface(android.graphics.Typeface.create(Ui.wp(c) ? "sans-serif-light" : "sans-serif-medium", android.graphics.Typeface.NORMAL));
+        search.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
         search.setBackground(null);
         search.setSingleLine(true);
         search.setPadding(Ui.dp(c, 14), 0, Ui.dp(c, 4), 0);
@@ -314,7 +310,7 @@ public class DrawerView extends FrameLayout {
         content.setPadding(0, 0, 0, 0);
         acrylic.setPadding(h, top + Ui.dp(getContext(), 8), h, Ui.dp(getContext(), 4));
         scrollContent.setPadding(h, 0, h, 0);
-        grid.setPadding(0, Ui.dp(getContext(), 6), gridRightPad(), bottom + Ui.dp(getContext(), 8) + (launcher.winPhone() ? Ui.dp(getContext(), 64) : 0));
+        grid.setPadding(0, Ui.dp(getContext(), 6), gridRightPad(), bottom + Ui.dp(getContext(), 8));
         applyListPadding();
         ((LayoutParams) selectBar.getLayoutParams()).bottomMargin = bottom + Ui.dp(getContext(), 16);
         inline.setBottomInset(bottom);
@@ -669,17 +665,6 @@ public class DrawerView extends FrameLayout {
         Context c = getContext();
         boolean on = key.equals(tab);
         // Natural, easy-to-hit tabs: the current one is a soft accent pill with bold text, the others plain text.
-        if (Ui.wp(c)) { // Windows Phone pivot header: big light lowercase, the current one bright, the rest dim
-            TextView pv = Ui.text(c, name.toLowerCase(java.util.Locale.getDefault()), 30, on ? pal.text : Ui.alpha(pal.text, 0x66));
-            pv.setLetterSpacing(-0.02f);
-            pv.setPadding(Ui.dp(c, 8), Ui.dp(c, 2), Ui.dp(c, 8), Ui.dp(c, 2));
-            pv.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { tab = key; refresh(); revealList(); } });
-            if (!locked()) pv.setOnLongClickListener(new OnLongClickListener() {
-                @Override public boolean onLongClick(View v) { renameTab(key, g); return true; }
-            });
-            tabBar.addView(pv, new LinearLayout.LayoutParams(-2, -2));
-            return;
-        }
         TextView t = Ui.text(c, name, 15, on ? pal.accent : pal.subtext);
         t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", on ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL));
         t.setGravity(Gravity.CENTER);
@@ -739,7 +724,7 @@ public class DrawerView extends FrameLayout {
 
     private void buildFrequent() {
         frequent.removeAllViews();
-        boolean show = !Ui.wp(getContext()) && Prefs.drawerFrequent(getContext()) && search.length() == 0 && "az".equals(Prefs.drawerSort(getContext()))
+        boolean show = Prefs.drawerFrequent(getContext()) && search.length() == 0 && "az".equals(Prefs.drawerSort(getContext()))
                 && "all".equals(tab) && !selecting;
         List<AppInfo> top = show ? AppRepository.get(getContext()).topUsed(cols()) : new ArrayList<AppInfo>();
         frequent.setVisibility(top.size() >= 2 ? VISIBLE : GONE);
@@ -1193,13 +1178,7 @@ public class DrawerView extends FrameLayout {
         setVisibility(VISIBLE);
         float h = getHeight() > 0 ? getHeight() : getResources().getDisplayMetrics().heightPixels;
         animate().cancel();
-        if (launcher.winPhone()) { // Windows Phone style: the app list slides in from the right
-            float w = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
-            setTranslationY(0);
-            setTranslationX(0);
-            setAlpha(0f);
-            animate().alpha(1f).setDuration(Anim.dur(c, 240)).setInterpolator(Anim.open(c)).start();
-        } else if (Anim.minimal(c)) {
+        if (Anim.minimal(c)) {
             setTranslationY(0);
             setAlpha(0f);
             animate().alpha(1f).setDuration(Anim.dur(c, 160)).start();
@@ -1245,12 +1224,6 @@ public class DrawerView extends FrameLayout {
         if (!animate) {
             animate().cancel();
             setVisibility(INVISIBLE);
-            if (launcher.winPhone()) { setTranslationX(0); setAlpha(1f); }
-            return;
-        }
-        if (launcher.winPhone()) {
-            animate().alpha(0f).setDuration(Anim.dur(c, 200)).setInterpolator(Anim.close(c))
-                    .withEndAction(new Runnable() { @Override public void run() { if (!open) { setVisibility(INVISIBLE); setTranslationX(0); setAlpha(1f); } } }).start();
             return;
         }
         float target = Anim.minimal(c) ? 0 : Anim.fluid(c) ? getHeight() * 0.4f : getHeight();
@@ -1280,10 +1253,9 @@ public class DrawerView extends FrameLayout {
     /** Tallest the app area has been at this width: the keyboard (search) must not shrink the grid. */
     private int stableH, stableW;
 
-    private int cols() { return Ui.wp(getContext()) ? 1 : Math.max(1, Prefs.drawerCols(getContext())); }
+    private int cols() { return Math.max(1, Prefs.drawerCols(getContext())); }
 
     private int rowHeight() {
-        if (Ui.wp(getContext())) return Ui.dp(getContext(), 64);
         if (probeH < 0) probeH = new IconView(getContext(), launcher, IconView.STYLE_DRAWER).desiredHeight();
         int rows = Prefs.drawerRows(getContext());
         if (scroll.getWidth() != stableW) { stableW = scroll.getWidth(); stableH = 0; }
@@ -1319,15 +1291,6 @@ public class DrawerView extends FrameLayout {
         if (AppRepository.get(getContext()).hasWorkProfile()) { keys.add("personal"); keys.add("work"); }
         for (DrawerGroups.Group g : DrawerGroups.tabs(getContext())) keys.add("t" + g.id);
         return keys;
-    }
-
-    private boolean draggingCloseH;
-
-    /** Windows Phone style: swiping right closes the app list (on the first tab, if there are tabs). */
-    private boolean shouldStartCloseH(float dx, float dy) {
-        if (!launcher.winPhone() || searchMode || selecting || downOnTabs || grid.isEditing() || wave.isActive()) return false;
-        List<String> keys = tabKeys();
-        return dx > slop * 1.5f && dx > Math.abs(dy) * 1.5f && (keys.size() <= 1 || keys.get(0).equals(tab));
     }
 
     private boolean shouldStartTabSwipe(float dx, float dy) {
@@ -1373,7 +1336,6 @@ public class DrawerView extends FrameLayout {
                 downX = ev.getRawX();
                 downY = ev.getRawY();
                 draggingClose = false;
-                draggingCloseH = false;
                 swipingTab = false;
                 pinching = false;
                 if (vt != null) vt.clear();
@@ -1389,11 +1351,6 @@ public class DrawerView extends FrameLayout {
             case MotionEvent.ACTION_MOVE:
                 if (ev.getPointerCount() == 1 && shouldStartClose(ev.getRawX() - downX, ev.getRawY() - downY)) {
                     draggingClose = true;
-                    hideIme();
-                    return true;
-                }
-                if (ev.getPointerCount() == 1 && shouldStartCloseH(ev.getRawX() - downX, ev.getRawY() - downY)) {
-                    draggingCloseH = true;
                     hideIme();
                     return true;
                 }
@@ -1422,11 +1379,6 @@ public class DrawerView extends FrameLayout {
                 downY = ev.getRawY();
                 return true;
             case MotionEvent.ACTION_MOVE:
-                if (!draggingCloseH && !draggingClose && !swipingTab && shouldStartCloseH(ev.getRawX() - downX, ev.getRawY() - downY)) draggingCloseH = true;
-                if (draggingCloseH) {
-                    setTranslationX(Math.max(0, ev.getRawX() - downX));
-                    return true;
-                }
                 if (!draggingClose && !swipingTab && shouldStartTabSwipe(ev.getRawX() - downX, ev.getRawY() - downY)) swipingTab = true;
                 if (swipingTab) {
                     float dx = ev.getRawX() - downX;
@@ -1447,13 +1399,6 @@ public class DrawerView extends FrameLayout {
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                if (draggingCloseH) {
-                    draggingCloseH = false;
-                    vt.computeCurrentVelocity(1000);
-                    if (ev.getActionMasked() == MotionEvent.ACTION_UP && (getTranslationX() > getWidth() * 0.25f || vt.getXVelocity() > 900)) close(true);
-                    else animate().translationX(0).setDuration(Anim.dur(getContext(), 260)).setInterpolator(Anim.gentle(getContext())).start();
-                    return true;
-                }
                 if (swipingTab) {
                     swipingTab = false;
                     vt.computeCurrentVelocity(1000);

@@ -59,7 +59,6 @@ public class CrashActivity extends Activity {
         root.addView(btn("Reset settings and home layout", new Runnable() { @Override public void run() {
             new File(getApplicationInfo().dataDir, "shared_prefs/" + Prefs.NAME + ".xml").delete();
             new File(getFilesDir(), "home.json").delete();
-            new File(getFilesDir(), "home_wp.json").delete();
             relaunch();
         } }));
         root.addView(btn("Open Grove", new Runnable() { @Override public void run() { relaunch(); } }));
