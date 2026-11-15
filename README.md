@@ -28,6 +28,13 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.49
+- **Groveguard web filtering**: with Groveguard installed, the feed browser asks Groveguard about every page and request — ad/tracker
+  blocking (uBlock Origin / EasyList lists), 18+ lists, dangerous sites and your own allow/block rules are controlled and logged in
+  Groveguard → web. Settings → Feed browser → "Use Groveguard for ad blocking & web protection" (on by default; Grove's own blocker
+  is used without Groveguard).
+- Groveguard feed card controls now use Groveguard's verified connection (works with Groveguard 1.2+, which refuses unsigned commands).
+
 ### What's new in 1.48.0
 - **Windows Phone style removed completely** (the home style option, floating button, sliding home screens, app list, pivot tabs and its settings look). The launcher is back to one classic design.
 - Faster: the colour palette is now built once instead of on every draw, and folder icons no longer read settings on every frame. Together with the earlier drawer fixes, scrolling and opening should be smoother.

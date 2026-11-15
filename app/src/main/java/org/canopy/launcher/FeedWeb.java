@@ -477,9 +477,23 @@ final class FeedWeb {
         });
         wv.setWebViewClient(new WebViewClient() {
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
+                Uri u = r.getUrl();
+                // Groveguard installed: it decides every page and request (and logs them in its web tab)
+                if (Guard.active(a) && u.getScheme() != null && u.getScheme().startsWith("http")) {
+                    String page = r.isForMainFrame() ? u.getHost() : wv.pageHost;
+                    android.os.Bundle b = Guard.check(a, u.toString(), page, r.isForMainFrame(), r.isForMainFrame() ? "page" : null);
+                    if (b != null) {
+                        if (!b.getBoolean("block")) return empty;
+                        if (r.isForMainFrame()) {
+                            byte[] html = Guard.blockPage(b.getString("kind"), u.getHost(), b.getString("why")).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                            return new android.webkit.WebResourceResponse("text/html", "utf-8", new java.io.ByteArrayInputStream(html));
+                        }
+                        wv.blocked.incrementAndGet();
+                        return new android.webkit.WebResourceResponse("text/plain", "utf-8", new java.io.ByteArrayInputStream(new byte[0]));
+                    }
+                }
                 // uBlock Origin lists: drop ad / tracker requests (never the page itself)
                 if (r.isForMainFrame()) return null;
-                Uri u = r.getUrl();
                 if (AdBlock.shouldBlock(a, u, wv.pageHost)) {
                     wv.blocked.incrementAndGet();
                     return new android.webkit.WebResourceResponse("text/plain", "utf-8", new java.io.ByteArrayInputStream(new byte[0]));
@@ -615,7 +629,13 @@ final class FeedWeb {
         if (fix != null) wv.evaluateJavascript(fix, null);
         wv.evaluateJavascript(WebMedia.js(background(c)), null);
         wv.evaluateJavascript(PULL_JS, null);
-        String css = AdBlock.cosmeticJs(c, wv.pageHost);
+        String css = null;
+        if (Guard.active(c)) {
+            String g = Guard.css(c, wv.pageHost);
+            if (g != null) css = "(function(){var s=document.createElement('style');s.textContent=" + org.json.JSONObject.quote(g)
+                    + ";(document.head||document.documentElement).appendChild(s);})();";
+        }
+        if (css == null) css = AdBlock.cosmeticJs(c, wv.pageHost);
         if (css != null) wv.evaluateJavascript(css, null);
     }
 

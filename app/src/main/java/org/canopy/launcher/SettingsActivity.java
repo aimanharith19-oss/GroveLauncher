@@ -500,6 +500,9 @@ public class SettingsActivity extends Activity {
         toggle("Reshape legacy icons", "wrap_legacy", true);
 
         header("Feed browser");
+        toggle("Use Groveguard for ad blocking & web protection", "use_groveguard", true);
+        info("When Groveguard is installed, it checks every page and request: ad, tracker, 18+ and dangerous-site blocking, your own "
+                + "allow/block rules and the log are all in Groveguard \u2192 web. Without Groveguard, Grove's own ad blocker is used.");
         toggle("Show only the website icon on tabs", "web_icon_only", false);
         toggle("Play videos automatically", "web_autoplay", true);
         browserChoices();

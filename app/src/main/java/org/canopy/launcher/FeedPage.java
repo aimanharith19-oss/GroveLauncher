@@ -2187,6 +2187,8 @@ public class FeedPage extends LinearLayout {
     }
 
     private void guardSend(String action, Intent extras) {
+        // the verified connection first (Groveguard 1.2+ refuses unsigned broadcasts), the old broadcast as a fallback
+        if (Guard.control(getContext(), action, extras == null ? null : extras.getExtras())) return;
         Intent i = new Intent(action).setComponent(new android.content.ComponentName(GUARD, GUARD + ".fw.AutomationReceiver"));
         if (extras != null) i.putExtras(extras);
         try { getContext().sendBroadcast(i); } catch (Exception e) { Ui.toast(getContext(), "Couldn't reach Grove Guard"); }
