@@ -66,6 +66,26 @@ public final class Guard {
         return b == null ? null : b.getString("css");
     }
 
+    /** Everything for one page from Groveguard 1.10+: "css", "js" (scriptlets that switch off ad scripts), "ex" (exceptions), "v". Null with older versions. */
+    public static Bundle cosmetic(Context c, String pageHost) {
+        Bundle b = call(c, "cosmetic", pageHost, null);
+        return b == null || !b.containsKey("ex") ? null : b;
+    }
+
+    private static String surveyor;
+    private static int surveyorV;
+
+    /** Script that hides elements matching the generic cosmetic filters (same for every page; fetched again when the lists change). */
+    public static String surveyor(Context c, int version) {
+        if (surveyor == null || version != surveyorV) {
+            Bundle b = call(c, "surveyor", null, null);
+            if (b == null) return null;
+            surveyor = b.getString("js");
+            surveyorV = b.getInt("v");
+        }
+        return surveyor;
+    }
+
     /** Sends a control command (realtime on/off, scan, update…) without needing Groveguard's automation key. */
     public static boolean control(Context c, String action, Bundle extras) {
         Bundle b = call(c, "control", action, extras);

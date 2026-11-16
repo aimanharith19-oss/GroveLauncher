@@ -336,6 +336,9 @@ final class FeedWeb {
      */
     static final class CardWebView extends WebView {
         volatile String pageHost;
+        /** Groveguard's cosmetic filters and scriptlets for the page being loaded, and the site they are for. */
+        android.os.Bundle cos;
+        String cosHost;
         final String id;
         final java.util.concurrent.atomic.AtomicInteger blocked = new java.util.concurrent.atomic.AtomicInteger();
 
@@ -532,6 +535,14 @@ final class FeedWeb {
                 wv.blocked.set(0);
                 String fix = AdBlock.enabled(a) ? siteFix(wv.pageHost) : null;
                 if (fix != null) v.evaluateJavascript(fix, null);
+                // Groveguard: this page's cosmetic filters and scriptlets (the scriptlets go in now, before the page's own scripts)
+                wv.cos = null; wv.cosHost = null;
+                if (Guard.active(a) && wv.pageHost != null) {
+                    wv.cos = Guard.cosmetic(a, wv.pageHost);
+                    wv.cosHost = wv.pageHost;
+                    String js = wv.cos == null ? null : wv.cos.getString("js");
+                    if (js != null) v.evaluateJavascript(js, null);
+                }
                 Object t = v.getTag(R.drawable.ic_more);
                 if (t instanceof android.widget.TextView) ((android.widget.TextView) t).setText(FeedPage.hostOf(u));
             }
@@ -624,9 +635,16 @@ final class FeedWeb {
         wv.evaluateJavascript(PULL_JS, null);
         String css = null;
         if (Guard.active(c)) {
-            String g = Guard.css(c, wv.pageHost);
+            android.os.Bundle b = wv.pageHost != null && wv.pageHost.equals(wv.cosHost) ? wv.cos : Guard.cosmetic(c, wv.pageHost);
+            String g = b != null ? b.getString("css") : Guard.css(c, wv.pageHost);
             if (g != null) css = "(function(){var s=document.createElement('style');s.textContent=" + org.json.JSONObject.quote(g)
                     + ";(document.head||document.documentElement).appendChild(s);})();";
+            if (b != null) {
+                String js = b.getString("js"); // again, in case the page replaced its document since it started
+                if (js != null) wv.evaluateJavascript(js, null);
+                String sv = Guard.surveyor(c, b.getInt("v")); // generic ".class" / "#id" filters, only for names this page uses
+                if (sv != null) wv.evaluateJavascript("window.__ggx=" + b.getString("ex") + ";" + sv, null);
+            }
         }
         if (css != null) wv.evaluateJavascript(css, null);
     }
