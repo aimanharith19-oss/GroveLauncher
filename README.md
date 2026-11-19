@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.52.0
+- **Notification history keeps one week; older ones go to a spreadsheet.** Anything older than 7 days is moved out of the feed into `Documents/Grove/Notification history.xlsx` (date & time, app, title, text, package), updated automatically and openable in any spreadsheet app. The "Keep history for" setting is gone.
+
 ### What's new in 1.51.2
 - **Web tabs are frozen unless the feed is on screen.** Before, the feed's websites kept running scripts and ad filters behind the home screen and the app drawer, which could make the drawer hang and taps land late (opening apps by accident). Now they only run while you're looking at the feed; playing media is spared.
 

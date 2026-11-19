@@ -559,8 +559,7 @@ public class SettingsActivity extends Activity {
         header("Notification badges");
         choice("Badges on icons", "badges", new String[]{"count", "dots", "off"}, new String[]{"Numbers", "Dots", "Off"}, Prefs.badges(this));
         toggle("Show notifications in the app's long-press menu (kept in memory only)", "menu_notifications", true);
-        toggle("Keep notification history in the feed (saved on this phone, kept even after clearing)", "notif_history", true);
-        choice("Keep history for", "notif_history_keep", new String[]{"7", "30", "90", "0"}, new String[]{"7 days", "30 days", "90 days", "Forever (latest 2000)"}, "30");
+        toggle("Keep notification history (the last 7 days here, older ones in Documents/Grove/Notification history.xlsx)", "notif_history", true);
         action("Notification access", badgeAccessSummary(), new Runnable() {
             @Override public void run() { safeStart(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")); }
         });

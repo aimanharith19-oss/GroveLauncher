@@ -51,8 +51,8 @@ public final class NotifHistory {
 
     public static boolean enabled(Context c) { return Prefs.sp(c).getBoolean("notif_history", true); }
 
-    /** Notifications are kept for 3 days at most. */
-    static int keepDays(Context c) { return 3; }
+    /** The feed keeps a week; older ones go to Documents/Grove/Notification history.xlsx. */
+    static int keepDays(Context c) { return 7; }
 
     private static File file(Context c) { return new File(c.getFilesDir(), "notification_history.tsv"); }
 
@@ -149,15 +149,17 @@ public final class NotifHistory {
         notifyListeners();
     }
 
+    /** The feed keeps one week; anything older (or past the size cap) moves to the spreadsheet archive. */
     private static void prune() {
-        int days = 3;
-        if (days > 0) {
-            long since = System.currentTimeMillis() - days * 24L * 3600 * 1000;
-            int drop = 0;
-            while (drop < entries.size() && entries.get(drop).when < since) drop++;
-            if (drop > 0) entries.subList(0, drop).clear();
+        long since = System.currentTimeMillis() - 7L * 24 * 3600 * 1000;
+        int drop = 0;
+        while (drop < entries.size() && entries.get(drop).when < since) drop++;
+        if (entries.size() - drop > MAX) drop = entries.size() - MAX;
+        if (drop > 0) {
+            List<Entry> old = new ArrayList<>(entries.subList(0, drop));
+            entries.subList(0, drop).clear();
+            if (app != null) NotifArchive.add(app, old);
         }
-        if (entries.size() > MAX) entries.subList(0, entries.size() - MAX).clear();
     }
 
     private static final Runnable SAVE = new Runnable() {
