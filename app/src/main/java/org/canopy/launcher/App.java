@@ -41,8 +41,35 @@ public class App extends Application {
         CrashLog.install(this);
         Prefs.sp(this).registerOnSharedPreferenceChangeListener(prefListener);
         KeepAliveService.sync(this);
+        // once a week, empty the launcher's cache (a little after start-up, so it never slows opening)
+        MAIN.postDelayed(new Runnable() { @Override public void run() { weeklyCacheClear(App.this); } }, 30000);
         registerReceiver(new android.content.BroadcastReceiver() {
             @Override public void onReceive(android.content.Context c, android.content.Intent i) { AppLock.relock(); }
         }, new android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_OFF));
+    }
+
+    /** Clears the cache folders once every 7 days; files touched in the last hour are left alone as they may be in use. */
+    static void weeklyCacheClear(final android.content.Context c) {
+        final long now = System.currentTimeMillis();
+        if (now - Prefs.sp(c).getLong("cache_cleared_at", 0) < 7L * 24 * 3600 * 1000) return;
+        Prefs.sp(c).edit().putLong("cache_cleared_at", now).apply();
+        IO.execute(new Runnable() {
+            @Override public void run() {
+                try { wipe(c.getCacheDir(), now - 3600 * 1000L, false); } catch (Throwable ignored) { }
+                try { wipe(c.getExternalCacheDir(), now - 3600 * 1000L, false); } catch (Throwable ignored) { }
+            }
+        });
+    }
+
+    private static void wipe(java.io.File dir, long before, boolean self) {
+        if (dir == null) return;
+        java.io.File[] kids = dir.listFiles();
+        if (kids != null) for (java.io.File f : kids) {
+            if (f.isDirectory()) wipe(f, before, true);
+            else if (f.lastModified() < before) //noinspection ResultOfMethodCallIgnored
+                f.delete();
+        }
+        if (self) //noinspection ResultOfMethodCallIgnored
+            dir.delete(); // only succeeds if it ended up empty
     }
 }
