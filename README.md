@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.52.5
+- **The notification spreadsheet now exists from the start.** It's created in `Documents/Grove/Notification history.xlsx` when the launcher starts (before, it appeared only once something was older than a week). Settings, under the notification history switch, has **Notification spreadsheet**: tap to save it now with everything so far, including the last 7 days.
+
 ### What's new in 1.52.4
 - **App icons in the notification spreadsheet.** `Documents/Grove/Notification history.xlsx` now has an Icon column with each app's icon beside its notifications (the first 30,000 rows get icons).
 

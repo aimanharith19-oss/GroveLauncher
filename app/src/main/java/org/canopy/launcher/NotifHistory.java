@@ -81,6 +81,13 @@ public final class NotifHistory {
             br.close();
         } catch (Throwable ignored) { entries.clear(); f.delete(); }
         prune();
+        NotifArchive.ensure(app);
+    }
+
+    /** Saves the spreadsheet right now, including what's still in the feed. */
+    public static void exportNow(Context c, Runnable done) {
+        ensureLoaded(c);
+        NotifArchive.exportNow(c, new ArrayList<>(entries), done);
     }
 
     private static String cap(String s, int n) { return s == null ? "" : s.length() > n ? s.substring(0, n) : s; }

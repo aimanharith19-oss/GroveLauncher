@@ -560,6 +560,14 @@ public class SettingsActivity extends Activity {
         choice("Badges on icons", "badges", new String[]{"count", "dots", "off"}, new String[]{"Numbers", "Dots", "Off"}, Prefs.badges(this));
         toggle("Show notifications in the app's long-press menu (kept in memory only)", "menu_notifications", true);
         toggle("Keep notification history (the last 7 days here, older ones in Documents/Grove/Notification history.xlsx)", "notif_history", true);
+        action("Notification spreadsheet", "Documents/Grove/Notification history.xlsx \u2014 tap to save it now with everything so far", new Runnable() {
+            @Override public void run() {
+                Ui.toast(SettingsActivity.this, "Saving\u2026");
+                NotifHistory.exportNow(SettingsActivity.this, new Runnable() {
+                    @Override public void run() { Ui.toast(SettingsActivity.this, "Saved to Documents/Grove/Notification history.xlsx"); }
+                });
+            }
+        });
         action("Notification access", badgeAccessSummary(), new Runnable() {
             @Override public void run() { safeStart(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")); }
         });

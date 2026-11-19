@@ -63,6 +63,48 @@ final class NotifArchive {
         });
     }
 
+    /** Makes sure the spreadsheet exists in Documents/Grove (empty at first), so you can find it. */
+    static void ensure(final Context c) {
+        App.IO.execute(new Runnable() {
+            @Override public void run() {
+                synchronized (LOCK) {
+                    if (!exists(c)) export(c);
+                }
+            }
+        });
+    }
+
+    private static boolean exists(Context c) {
+        try {
+            Cursor q = c.getContentResolver().query(MediaStore.Files.getContentUri("external"), new String[]{MediaStore.MediaColumns._ID},
+                    MediaStore.MediaColumns.DISPLAY_NAME + "=? AND " + MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ?", new String[]{NAME, DIR + "%"}, null);
+            if (q == null) return false;
+            try { return q.moveToFirst(); } finally { q.close(); }
+        } catch (Throwable t) { return false; }
+    }
+
+    /** Writes the spreadsheet now with everything: the archive plus the notifications still in the feed. */
+    static void exportNow(final Context c, final List<NotifHistory.Entry> current, final Runnable done) {
+        App.IO.execute(new Runnable() {
+            @Override public void run() {
+                synchronized (LOCK) {
+                    File all = new File(c.getCacheDir(), "notification_all.tsv");
+                    try {
+                        FileOutputStream o = new FileOutputStream(all);
+                        File a = file(c);
+                        if (a.exists()) { FileInputStream in = new FileInputStream(a); byte[] buf = new byte[16384]; int n; while ((n = in.read(buf)) > 0) o.write(buf, 0, n); in.close(); }
+                        Writer w = new OutputStreamWriter(o, "UTF-8");
+                        for (NotifHistory.Entry e : current) w.write(e.when + "\t" + e.pkg + "\t" + esc(e.title) + "\t" + esc(e.text) + "\n");
+                        w.close();
+                        export(c, all);
+                    } catch (Throwable ignored) { }
+                    all.delete();
+                }
+                if (done != null) App.MAIN.post(done);
+            }
+        });
+    }
+
     private static String esc(String s) { return s == null ? "" : s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", ""); }
 
     private static String unesc(String s) {
@@ -117,9 +159,10 @@ final class NotifArchive {
     }
 
     /** Writes the whole archive out as an .xlsx (a zip of small XML files) into Documents/Grove, each row with its app's icon. */
-    private static void export(Context c) {
-        File f = file(c);
-        if (!f.exists()) return;
+    private static void export(Context c) { export(c, file(c)); }
+
+    private static void export(Context c, File f) {
+        if (!f.exists()) { try { f.createNewFile(); } catch (Exception e) { return; } } // nothing archived yet: still write the (empty) spreadsheet so it can be found
         File tmp = new File(c.getCacheDir(), "notification_archive.xlsx");
         try {
             PackageManager pm = c.getPackageManager();
