@@ -538,10 +538,22 @@ final class FeedWeb {
                 // Groveguard: this page's cosmetic filters and scriptlets (the scriptlets go in now, before the page's own scripts)
                 wv.cos = null; wv.cosHost = null;
                 if (Guard.active(a) && wv.pageHost != null) {
-                    wv.cos = Guard.cosmetic(a, wv.pageHost);
-                    wv.cosHost = wv.pageHost;
-                    String js = wv.cos == null ? null : wv.cos.getString("js");
-                    if (js != null) v.evaluateJavascript(js, null);
+                    final String ph = wv.pageHost;
+                    App.IO.execute(new Runnable() {
+                        @Override public void run() {
+                            final android.os.Bundle b = Guard.cosmetic(a, ph);
+                            App.MAIN.post(new Runnable() {
+                                @Override public void run() {
+                                    if (!ph.equals(wv.pageHost)) return; // moved on already
+                                    wv.cos = b;
+                                    wv.cosHost = ph;
+                                    String js = b == null ? null : b.getString("js");
+                                    if (js != null) wv.evaluateJavascript(js, null);
+                                    if (b != null) inject(a, wv); // its styles, now that the answer is here
+                                }
+                            });
+                        }
+                    });
                 }
                 Object t = v.getTag(R.drawable.ic_more);
                 if (t instanceof android.widget.TextView) ((android.widget.TextView) t).setText(FeedPage.hostOf(u));

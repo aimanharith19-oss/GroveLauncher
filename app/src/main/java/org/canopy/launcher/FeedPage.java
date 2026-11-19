@@ -2201,7 +2201,18 @@ public class FeedPage extends LinearLayout {
             col.addView(Ui.text(c, "Grove Guard isn't installed. Install the Grove Guard APK to see its protection here.", 13, pal.subtext));
             return;
         }
-        final android.content.ContentValues st = guardStatus();
+        // ask Grove Guard off the main thread: waiting for it here froze the launcher when Guard was busy
+        col.addView(Ui.text(c, "Reading Grove Guard\u2026", 13, pal.subtext));
+        App.IO.execute(new Runnable() {
+            @Override public void run() {
+                final android.content.ContentValues got = guardStatus();
+                App.MAIN.post(new Runnable() { @Override public void run() { col.removeAllViews(); fillGuardWith(col, got); } });
+            }
+        });
+    }
+
+    private void fillGuardWith(final LinearLayout col, final android.content.ContentValues st) {
+        final Context c = getContext();
         if (st == null) {
             col.addView(Ui.text(c, "Open Grove Guard once so it can share its status with Grove Launcher.", 13, pal.subtext));
             LinearLayout r = buttonRow();

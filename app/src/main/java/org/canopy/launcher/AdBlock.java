@@ -36,10 +36,14 @@ public final class AdBlock {
     }
 
     /** Tells Grove Guard a page was opened, for its web tab → History. */
-    public static void visit(Context c, String url, String title) {
+    public static void visit(final Context c, final String url, final String title) {
         if (!Guard.active(c)) return;
-        Bundle x = new Bundle();
-        x.putString("title", title);
-        Guard.call(c, "visit", url, x);
+        App.IO.execute(new Runnable() {
+            @Override public void run() {
+                Bundle x = new Bundle();
+                x.putString("title", title);
+                Guard.call(c, "visit", url, x);
+            }
+        });
     }
 }

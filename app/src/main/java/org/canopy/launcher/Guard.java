@@ -37,6 +37,8 @@ public final class Guard {
     }
 
     static Bundle call(Context c, String method, String arg, Bundle extras) {
+        // never wait for Groveguard on the main thread: a slow answer would freeze the launcher ("not responding")
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) return null;
         try {
             ContentProviderClient cl = client;
             if (cl == null) client = cl = c.getContentResolver().acquireUnstableContentProviderClient(URI);
@@ -76,7 +78,11 @@ public final class Guard {
     private static int surveyorV;
 
     /** Script that hides elements matching the generic cosmetic filters (same for every page; fetched again when the lists change). */
-    public static String surveyor(Context c, int version) {
+    public static String surveyor(final Context c, final int version) {
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            if (surveyor == null || version != surveyorV) App.IO.execute(new Runnable() { @Override public void run() { surveyor(c, version); } });
+            return surveyor;
+        }
         if (surveyor == null || version != surveyorV) {
             Bundle b = call(c, "surveyor", null, null);
             if (b == null) return null;
@@ -87,7 +93,11 @@ public final class Guard {
     }
 
     /** Sends a control command (realtime on/off, scan, update…) without needing Groveguard's automation key. */
-    public static boolean control(Context c, String action, Bundle extras) {
+    public static boolean control(final Context c, final String action, final Bundle extras) {
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            App.IO.execute(new Runnable() { @Override public void run() { control(c, action, extras); } });
+            return active(c);
+        }
         Bundle b = call(c, "control", action, extras);
         return b != null && b.getBoolean("ok");
     }
