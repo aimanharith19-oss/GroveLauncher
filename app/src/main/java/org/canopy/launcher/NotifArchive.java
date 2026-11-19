@@ -32,7 +32,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Notifications older than the week the feed keeps are moved here: appended to a small file on the phone and written out
+ * Notifications older than the 3 days the feed keeps are moved here: appended to a small file on the phone and written out
  * as a spreadsheet, Documents/Grove/Notification history.xlsx, which you can open in any spreadsheet app.
  */
 final class NotifArchive {

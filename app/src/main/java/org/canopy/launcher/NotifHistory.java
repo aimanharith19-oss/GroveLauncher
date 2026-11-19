@@ -51,8 +51,8 @@ public final class NotifHistory {
 
     public static boolean enabled(Context c) { return Prefs.sp(c).getBoolean("notif_history", true); }
 
-    /** The feed keeps a week; older ones go to Documents/Grove/Notification history.xlsx. */
-    static int keepDays(Context c) { return 7; }
+    /** The feed keeps 3 days; older ones go to Documents/Grove/Notification history.xlsx. */
+    static int keepDays(Context c) { return 3; }
 
     private static File file(Context c) { return new File(c.getFilesDir(), "notification_history.tsv"); }
 
@@ -156,9 +156,9 @@ public final class NotifHistory {
         notifyListeners();
     }
 
-    /** The feed keeps one week; anything older (or past the size cap) moves to the spreadsheet archive. */
+    /** The feed keeps 3 days; anything older (or past the size cap) moves to the spreadsheet archive. */
     private static void prune() {
-        long since = System.currentTimeMillis() - 7L * 24 * 3600 * 1000;
+        long since = System.currentTimeMillis() - 3L * 24 * 3600 * 1000;
         int drop = 0;
         while (drop < entries.size() && entries.get(drop).when < since) drop++;
         if (entries.size() - drop > MAX) drop = entries.size() - MAX;
