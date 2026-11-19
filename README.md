@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.51.1
+- **Crop handles fixed.** When a widget was cropped small, the four handles piled on top of each other and you couldn't drag it back out. They now sit just outside the frame, the nearest one is grabbed, and you can crop much smaller.
+
 ### What's new in 1.51.0
 - **Crop widgets by dragging.** Long-press a widget → **Crop** (new crop icon). The handles now hide or bring back that side of the widget as you drag, like resizing, but the content stays where it is. A dashed line shows the whole widget. The sliders are gone.
 

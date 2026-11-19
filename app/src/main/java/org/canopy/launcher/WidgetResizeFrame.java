@@ -28,6 +28,7 @@ public class WidgetResizeFrame extends FrameLayout {
             handleRing = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final float handleR, touchR;
     private int edge = NONE;
+    private float grabX, grabY; // crop mode: where the finger sits on the handle
     private float gridLeft, gridTop, offX, offY;
     private final boolean free;
     /** Crop mode: dragging a handle hides (or brings back) that side of the widget instead of resizing it. */
@@ -85,10 +86,10 @@ public class WidgetResizeFrame extends FrameLayout {
         float r = Ui.dp(getContext(), 14);
         if (crop) c.drawRect(full, dash);
         c.drawRoundRect(rect, r, r, frame);
-        drawHandle(c, rect.left, rect.centerY());
-        drawHandle(c, rect.right, rect.centerY());
-        drawHandle(c, rect.centerX(), rect.top);
-        drawHandle(c, rect.centerX(), rect.bottom);
+        drawHandle(c, hx(LEFT), hy(LEFT));
+        drawHandle(c, hx(RIGHT), hy(RIGHT));
+        drawHandle(c, hx(TOP), hy(TOP));
+        drawHandle(c, hx(BOTTOM), hy(BOTTOM));
     }
 
     private void drawHandle(Canvas c, float x, float y) {
@@ -96,12 +97,20 @@ public class WidgetResizeFrame extends FrameLayout {
         c.drawCircle(x, y, handleR, handleRing);
     }
 
+    /** Handle positions. When cropping they sit just outside the frame, so a small crop still has four handles you can grab. */
+    private float off() { return crop ? handleR * 1.6f : 0; }
+    private float hx(int e) { return e == LEFT ? rect.left - off() : e == RIGHT ? rect.right + off() : rect.centerX(); }
+    private float hy(int e) { return e == TOP ? rect.top - off() : e == BOTTOM ? rect.bottom + off() : rect.centerY(); }
+
     private int hit(float x, float y) {
-        if (Math.hypot(x - rect.left, y - rect.centerY()) < touchR) return LEFT;
-        if (Math.hypot(x - rect.right, y - rect.centerY()) < touchR) return RIGHT;
-        if (Math.hypot(x - rect.centerX(), y - rect.top) < touchR) return TOP;
-        if (Math.hypot(x - rect.centerX(), y - rect.bottom) < touchR) return BOTTOM;
-        return NONE;
+        int best = NONE;
+        double bd = touchR;
+        for (int e = LEFT; e <= BOTTOM; e++) {
+            double d = Math.hypot(x - hx(e), y - hy(e));
+            if (d < bd) { bd = d; best = e; }
+        }
+        if (best != NONE) { grabX = hx(best) - x; grabY = hy(best) - y; }
+        return best;
     }
 
     @Override public boolean onTouchEvent(MotionEvent e) {
@@ -157,7 +166,10 @@ public class WidgetResizeFrame extends FrameLayout {
     private void moveFree(float x, float y, int cw, int ch) {
         float min = Ui.dp(getContext(), 40), W = getWidth(), H = getHeight();
         if (crop) { // stay inside the whole widget, and keep at least a tenth of it
-            min = Math.max(min, Math.min(full.width(), full.height()) * 0.1f);
+            min = Math.max(Ui.dp(getContext(), 16), 0.04f * Math.max(full.width(), full.height()));
+            float fx = x + grabX, fy = y + grabY, o = off();
+            x = edge == LEFT ? fx + o : edge == RIGHT ? fx - o : x;
+            y = edge == TOP ? fy + o : edge == BOTTOM ? fy - o : y;
             switch (edge) {
                 case LEFT: rect.left = clamp(x, full.left, rect.right - min); break;
                 case RIGHT: rect.right = clamp(x, rect.left + min, full.right); break;

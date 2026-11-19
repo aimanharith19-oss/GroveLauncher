@@ -28,7 +28,7 @@ public class LauncherWidgetView extends AppWidgetHostView {
     public float cropL, cropT, cropR, cropB;
 
     public void setCrop(float l, float t, float r, float b) {
-        cropL = l; cropT = t; cropR = Math.min(r, 0.9f - l); cropB = Math.min(b, 0.9f - t);
+        cropL = l; cropT = t; cropR = Math.min(r, 0.97f - l); cropB = Math.min(b, 0.97f - t);
         requestLayout();
         removeCallbacks(sendSize);
         postDelayed(sendSize, 250);
