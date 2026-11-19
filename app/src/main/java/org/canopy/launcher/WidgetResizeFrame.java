@@ -30,15 +30,26 @@ public class WidgetResizeFrame extends FrameLayout {
     private int edge = NONE;
     private float gridLeft, gridTop, offX, offY;
     private final boolean free;
+    /** Crop mode: dragging a handle hides (or brings back) that side of the widget instead of resizing it. */
+    private final boolean crop;
+    private final RectF full = new RectF();
+    private final Paint dash = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    public WidgetResizeFrame(LauncherActivity c, HomeItem item, View widget, CellLayout cl) {
+    public WidgetResizeFrame(LauncherActivity c, HomeItem item, View widget, CellLayout cl) { this(c, item, widget, cl, false); }
+
+    public WidgetResizeFrame(LauncherActivity c, HomeItem item, View widget, CellLayout cl, boolean crop) {
         super(c);
+        this.crop = crop && widget instanceof LauncherWidgetView;
         launcher = c;
         this.item = item;
         this.widget = widget;
         this.cl = cl;
-        free = (item.type == HomeItem.WIDGET ? c.freeWidgets() : c.freeIcons()) && item.container == HomeItem.DESKTOP;
+        free = this.crop || (item.type == HomeItem.WIDGET ? c.freeWidgets() : c.freeIcons()) && item.container == HomeItem.DESKTOP;
         setWillNotDraw(false);
+        dash.setStyle(Paint.Style.STROKE);
+        dash.setStrokeWidth(Ui.dp(c, 1.5f));
+        dash.setColor(0x99FFFFFF);
+        dash.setPathEffect(new android.graphics.DashPathEffect(new float[]{Ui.dp(c, 6), Ui.dp(c, 6)}, 0));
         int accent = Prefs.accent(c);
         frame.setStyle(Paint.Style.STROKE);
         frame.setStrokeWidth(Ui.dp(c, 2));
@@ -61,12 +72,18 @@ public class WidgetResizeFrame extends FrameLayout {
         gridLeft = g[0] - me[0] + cl.getPaddingLeft();
         gridTop = g[1] - me[1] + cl.getPaddingTop();
         rect.set(w[0] - me[0], w[1] - me[1], w[0] - me[0] + widget.getWidth(), w[1] - me[1] + widget.getHeight());
+        if (crop) { // the whole widget, as it would be without any crop
+            LauncherWidgetView lw = (LauncherWidgetView) widget;
+            float fw = rect.width() / (1f - lw.cropL - lw.cropR), fh = rect.height() / (1f - lw.cropT - lw.cropB);
+            full.set(rect.left - lw.cropL * fw, rect.top - lw.cropT * fh, rect.left - lw.cropL * fw + fw, rect.top - lw.cropT * fh + fh);
+        }
         invalidate();
     }
 
     @Override protected void onDraw(Canvas c) {
         if (rect.isEmpty()) return;
         float r = Ui.dp(getContext(), 14);
+        if (crop) c.drawRect(full, dash);
         c.drawRoundRect(rect, r, r, frame);
         drawHandle(c, rect.left, rect.centerY());
         drawHandle(c, rect.right, rect.centerY());
@@ -94,7 +111,7 @@ public class WidgetResizeFrame extends FrameLayout {
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 edge = hit(x, y);
-                if (edge == NONE && free && rect.contains(x, y)) { edge = MOVE; offX = x - rect.left; offY = y - rect.top; }
+                if (edge == NONE && free && !crop && rect.contains(x, y)) { edge = MOVE; offX = x - rect.left; offY = y - rect.top; }
                 if (edge == NONE && !rect.contains(x, y)) launcher.finishWidgetResize();
                 return true;
             case MotionEvent.ACTION_MOVE: {
@@ -139,7 +156,21 @@ public class WidgetResizeFrame extends FrameLayout {
     /** Free mode: no grid, no limits — the widget follows your finger anywhere on screen, edges included. */
     private void moveFree(float x, float y, int cw, int ch) {
         float min = Ui.dp(getContext(), 40), W = getWidth(), H = getHeight();
-        switch (edge) {
+        if (crop) { // stay inside the whole widget, and keep at least a tenth of it
+            min = Math.max(min, Math.min(full.width(), full.height()) * 0.1f);
+            switch (edge) {
+                case LEFT: rect.left = clamp(x, full.left, rect.right - min); break;
+                case RIGHT: rect.right = clamp(x, rect.left + min, full.right); break;
+                case TOP: rect.top = clamp(y, full.top, rect.bottom - min); break;
+                case BOTTOM: rect.bottom = clamp(y, rect.top + min, full.bottom); break;
+            }
+            LauncherWidgetView lw = (LauncherWidgetView) widget;
+            float fw = full.width(), fh = full.height();
+            item.cropL = (rect.left - full.left) / fw; item.cropR = (full.right - rect.right) / fw;
+            item.cropT = (rect.top - full.top) / fh; item.cropB = (full.bottom - rect.bottom) / fh;
+            lw.setCrop(item.cropL, item.cropT, item.cropR, item.cropB);
+        }
+        if (!crop) switch (edge) {
             case LEFT: rect.left = clamp(x, 0, rect.right - min); break;
             case RIGHT: rect.right = clamp(x, rect.left + min, W); break;
             case TOP: rect.top = clamp(y, 0, rect.bottom - min); break;

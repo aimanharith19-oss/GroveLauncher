@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.51.0
+- **Crop widgets by dragging.** Long-press a widget → **Crop** (new crop icon). The handles now hide or bring back that side of the widget as you drag, like resizing, but the content stays where it is. A dashed line shows the whole widget. The sliders are gone.
+
 ### What's new in 1.50.1
 - **Fixes the launcher freezing ("not responding") at start-up.** Nothing on the main thread waits for Grove Guard any more: its status card, page filters, history and controls are all fetched in the background.
 
