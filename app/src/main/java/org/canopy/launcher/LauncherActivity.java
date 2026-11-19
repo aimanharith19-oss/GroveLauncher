@@ -240,7 +240,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             @Override public void run() {
                 if (stopped) return;
                 try { widgetHost.startListening(); } catch (Throwable ignored) { }
-                try { wakeWeb(); } catch (Throwable ignored) { }
+                try { wakeWeb(); webForFeed = true; syncWebToFeed(); } catch (Throwable ignored) { }
             }
         });
     }
@@ -1392,8 +1392,31 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         else wall3d.stop();
     }
 
+    private boolean webForFeed = true;
+
+    /** Web tabs only run while the feed is on screen: on the home screen and in the drawer they are frozen (playing media is spared). */
+    private void syncWebToFeed() {
+        boolean open = feedAmt > 0.02f;
+        if (open == webForFeed || webViews.isEmpty()) return;
+        webForFeed = open;
+        try {
+            if (open) wakeWeb();
+            else if (!stopped) {
+                boolean keep = FeedWeb.background(this), spared = false;
+                android.webkit.WebView any = null;
+                for (java.util.Map.Entry<String, android.webkit.WebView> e : webViews.entrySet()) {
+                    any = e.getValue();
+                    if ((keep && isPlaying(e.getKey())) || e.getKey().equals(pipTab)) { spared = true; continue; }
+                    e.getValue().onPause();
+                }
+                if (any != null && !spared) { any.pauseTimers(); webAsleep = true; }
+            }
+        } catch (Throwable ignored) { }
+    }
+
     private void applyDepth() {
         if (backdrop == null) return;
+        syncWebToFeed();
         updateWallMotion();
         boolean blurOn = Prefs.sp(this).getBoolean("depth_blur", true);
         float amt = Math.max(feedAmt, overlayAmt);
