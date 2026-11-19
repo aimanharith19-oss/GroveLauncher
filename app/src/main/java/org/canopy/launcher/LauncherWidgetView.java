@@ -24,6 +24,38 @@ public class LauncherWidgetView extends AppWidgetHostView {
     /** Click-through: the widget only shows; taps and swipes go to what's behind it. */
     public boolean clickThrough;
 
+    /** Crop: the share of the widget (0..0.8) hidden on each side, so one part of a big widget can be used on its own. */
+    public float cropL, cropT, cropR, cropB;
+
+    public void setCrop(float l, float t, float r, float b) {
+        cropL = l; cropT = t; cropR = Math.min(r, 0.9f - l); cropB = Math.min(b, 0.9f - t);
+        requestLayout();
+        removeCallbacks(sendSize);
+        postDelayed(sendSize, 250);
+    }
+
+    public boolean cropped() { return cropL > 0 || cropT > 0 || cropR > 0 || cropB > 0; }
+
+    @Override protected void onMeasure(int wSpec, int hSpec) {
+        if (!cropped()) { super.onMeasure(wSpec, hSpec); return; }
+        int w = MeasureSpec.getSize(wSpec), h = MeasureSpec.getSize(hSpec);
+        // lay the whole widget out at its full size, then show only the part that is left after cropping
+        int fw = Math.round(w / (1f - cropL - cropR)), fh = Math.round(h / (1f - cropT - cropB));
+        super.onMeasure(MeasureSpec.makeMeasureSpec(fw, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(fh, MeasureSpec.EXACTLY));
+        setMeasuredDimension(w, h);
+    }
+
+    @Override protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+        if (!cropped()) return;
+        for (int i = 0; i < getChildCount(); i++) {
+            android.view.View c = getChildAt(i);
+            int fw = c.getMeasuredWidth(), fh = c.getMeasuredHeight();
+            int ox = Math.round(fw * cropL), oy = Math.round(fh * cropT);
+            c.layout(-ox, -oy, fw - ox, fh - oy);
+        }
+    }
+
     @Override public boolean dispatchTouchEvent(MotionEvent ev) {
         if (clickThrough) return false;
         return super.dispatchTouchEvent(ev);
@@ -87,7 +119,7 @@ public class LauncherWidgetView extends AppWidgetHostView {
         @SuppressWarnings("deprecation")
         @Override public void run() {
             float d = getResources().getDisplayMetrics().density;
-            int wd = (int) (getWidth() / d), hd = (int) (getHeight() / d);
+            int wd = (int) (getWidth() / (1f - cropL - cropR) / d), hd = (int) (getHeight() / (1f - cropT - cropB) / d);
             if (wd <= 0 || hd <= 0) return;
             try { updateAppWidgetSize(null, wd, hd, wd, hd); } catch (Exception ignored) { }
         }

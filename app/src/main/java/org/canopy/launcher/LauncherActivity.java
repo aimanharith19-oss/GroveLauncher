@@ -921,6 +921,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                 wv.host = this;
                 wv.setTag(it);
                 wv.clickThrough = it.clickThrough && it.container == HomeItem.DESKTOP;
+                wv.setCrop(it.cropL, it.cropT, it.cropR, it.cropB);
                 return wv;
             }
             case HomeItem.FOLDER: {
@@ -2179,6 +2180,9 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         entries.add(new MenuEntry(R.drawable.ic_resize, "Resize", new Runnable() {
             @Override public void run() { resizeWidget(item); }
         }));
+        entries.add(new MenuEntry(R.drawable.ic_resize, "Crop", new Runnable() {
+            @Override public void run() { cropWidget(item, v); }
+        }));
         if (wall3d != null && Wallpaper3D.hasSubject(this) && item.container == HomeItem.DESKTOP) {
             entries.add(new MenuEntry(R.drawable.ic_layers, item.behind ? "Bring in front of wallpaper subject" : "Put behind wallpaper subject", new Runnable() {
                 @Override public void run() {
@@ -2204,6 +2208,53 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             @Override public void run() { removeItem(item); }
         }));
         showMenuFor(v, entries);
+    }
+
+    /** Hides edges of a widget, so a big widget can be used for just one part of it (shown live while you slide). */
+    private void cropWidget(final HomeItem item, final LauncherWidgetView v) {
+        final float[] c = {item.cropL, item.cropT, item.cropR, item.cropB};
+        final String[] names = {"Left", "Top", "Right", "Bottom"};
+        final LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int pad = Ui.dp(this, 20);
+        box.setPadding(pad, Ui.dp(this, 8), pad, 0);
+        for (int i = 0; i < 4; i++) {
+            final int k = i;
+            TextView label = new TextView(this);
+            label.setText(names[i] + ": " + Math.round(c[i] * 100) + "%");
+            box.addView(label);
+            android.widget.SeekBar sb = new android.widget.SeekBar(this);
+            sb.setMax(80);
+            sb.setProgress(Math.round(c[i] * 100));
+            sb.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(android.widget.SeekBar s, int p, boolean user) {
+                    c[k] = p / 100f;
+                    ((TextView) box.getChildAt(k * 2)).setText(names[k] + ": " + p + "%");
+                    v.setCrop(c[0], c[1], c[2], c[3]);
+                }
+                @Override public void onStartTrackingTouch(android.widget.SeekBar s) { }
+                @Override public void onStopTrackingTouch(android.widget.SeekBar s) { }
+            });
+            box.addView(sb);
+        }
+        Ui.dialog(this).setTitle("Crop widget").setView(box)
+                .setPositiveButton("Done", new android.content.DialogInterface.OnClickListener() {
+                    @Override public void onClick(android.content.DialogInterface d, int w) {
+                        item.cropL = v.cropL; item.cropT = v.cropT; item.cropR = v.cropR; item.cropB = v.cropB;
+                        store.commit();
+                    }
+                })
+                .setNeutralButton("Reset", new android.content.DialogInterface.OnClickListener() {
+                    @Override public void onClick(android.content.DialogInterface d, int w) {
+                        v.setCrop(0, 0, 0, 0);
+                        item.cropL = item.cropT = item.cropR = item.cropB = 0;
+                        store.commit();
+                    }
+                })
+                .setOnCancelListener(new android.content.DialogInterface.OnCancelListener() {
+                    @Override public void onCancel(android.content.DialogInterface d) { v.setCrop(item.cropL, item.cropT, item.cropR, item.cropB); }
+                })
+                .show();
     }
 
     /** A click-through widget under a long-press on "empty" space: its menu opens instead of the home menu. */

@@ -30,6 +30,8 @@ public class HomeItem {
     public boolean behind;
     /** WIDGET that lets touches pass through to whatever is behind it (icons, KLWP…). */
     public boolean clickThrough;
+    /** WIDGET crop: share hidden on the left, top, right and bottom (0..0.8). */
+    public float cropL, cropT, cropR, cropB;
     public boolean isFree() { return !Float.isNaN(fx) && !Float.isNaN(fw); }
     /** WEB: a website shortcut (address in {@code component}, name in {@code title}), shown with the site's icon. */
     public String pkg, shortcutId; // SHORTCUT
@@ -58,6 +60,7 @@ public class HomeItem {
         if (swipe != null) o.put("swipe", swipe);
         if (behind) o.put("behind", true);
         if (clickThrough) o.put("ct", true);
+        if (cropL > 0 || cropT > 0 || cropR > 0 || cropB > 0) o.put("crop", new JSONArray().put(cropL).put(cropT).put(cropR).put(cropB));
         if (isFree()) o.put("fx", fx).put("fy", fy).put("fw", fw).put("fh", fh);
         if (!children.isEmpty()) {
             JSONArray a = new JSONArray();
@@ -86,6 +89,8 @@ public class HomeItem {
         it.swipe = o.optString("swipe", null);
         it.behind = o.optBoolean("behind", false);
         it.clickThrough = o.optBoolean("ct", false);
+        JSONArray cr = o.optJSONArray("crop");
+        if (cr != null && cr.length() == 4) { it.cropL = (float) cr.optDouble(0); it.cropT = (float) cr.optDouble(1); it.cropR = (float) cr.optDouble(2); it.cropB = (float) cr.optDouble(3); }
         if (o.has("fx")) {
             it.fx = (float) o.optDouble("fx", Double.NaN);
             it.fy = (float) o.optDouble("fy", Double.NaN);

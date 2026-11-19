@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.50.0
+- **Crop widgets.** Long-press a widget → **Crop** and slide how much to hide on the left, top, right and bottom (live preview, Reset to undo). Use just one part of a big widget, such as only the clock or only the search bar. The widget is drawn at full size and only the part left is shown, so it keeps working and keeps your crop.
+
 ### What's new in 1.49.1
 - **Ad blocking is now only in Grove Guard.** Grove's own filter lists are gone (about 1.4 MB smaller), so Settings → Feed browser → "Block ads & trackers" asks Grove Guard. Without Grove Guard nothing is blocked. Lists, your rules and updates are in Grove Guard → web.
 - **Website history in Grove Guard** (web → History) for pages opened in the feed's browser. Needs Grove Guard 1.6.1.
