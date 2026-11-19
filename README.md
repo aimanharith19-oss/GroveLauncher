@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.52.4
+- **App icons in the notification spreadsheet.** `Documents/Grove/Notification history.xlsx` now has an Icon column with each app's icon beside its notifications (the first 30,000 rows get icons).
+
 ### What's new in 1.52.3
 - **Fixes a blank browser.** The feed's web tabs could stay frozen after the launcher restarted itself or a tab was opened while they were asleep. They are now always woken when the feed opens or a new tab is created.
 

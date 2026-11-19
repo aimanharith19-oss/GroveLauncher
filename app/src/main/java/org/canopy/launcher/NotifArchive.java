@@ -101,7 +101,22 @@ final class NotifArchive {
         return l;
     }
 
-    /** Writes the whole archive out as an .xlsx (a zip of small XML files) into Documents/Grove. */
+    private static final int ICON_ROWS = 30000; // rows that get an app icon (keeps the file a sensible size)
+
+    private static byte[] icon(PackageManager pm, String pkg) {
+        try {
+            android.graphics.drawable.Drawable d = pm.getApplicationIcon(pkg);
+            android.graphics.Bitmap bm = android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888);
+            d.setBounds(0, 0, 64, 64);
+            d.draw(new android.graphics.Canvas(bm));
+            java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
+            bm.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, o);
+            bm.recycle();
+            return o.toByteArray();
+        } catch (Throwable t) { return null; }
+    }
+
+    /** Writes the whole archive out as an .xlsx (a zip of small XML files) into Documents/Grove, each row with its app's icon. */
     private static void export(Context c) {
         File f = file(c);
         if (!f.exists()) return;
@@ -110,32 +125,63 @@ final class NotifArchive {
             PackageManager pm = c.getPackageManager();
             Map<String, String> labels = new HashMap<>();
             SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
+            // pass 1: which apps are in the archive, and their icons
+            Map<String, Integer> iconIdx = new java.util.LinkedHashMap<>();
+            List<byte[]> pngs = new ArrayList<>();
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
+            String line;
+            int seen = 0;
+            while ((line = br.readLine()) != null && seen < ICON_ROWS) {
+                String[] p = line.split("\t", -1);
+                if (p.length < 4) continue;
+                seen++;
+                if (!iconIdx.containsKey(p[1])) {
+                    byte[] png = icon(pm, p[1]);
+                    if (png == null) { iconIdx.put(p[1], -1); continue; }
+                    iconIdx.put(p[1], pngs.size());
+                    pngs.add(png);
+                }
+            }
+            br.close();
+            boolean pics = !pngs.isEmpty();
             ZipOutputStream z = new ZipOutputStream(new FileOutputStream(tmp));
             put(z, "[Content_Types].xml", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
                     + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+                    + "<Default Extension=\"png\" ContentType=\"image/png\"/>"
                     + "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
-                    + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/></Types>");
+                    + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+                    + (pics ? "<Override PartName=\"/xl/drawings/drawing1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.drawing+xml\"/>" : "") + "</Types>");
             put(z, "_rels/.rels", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
                     + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/></Relationships>");
             put(z, "xl/workbook.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" "
                     + "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><sheets><sheet name=\"Notifications\" sheetId=\"1\" r:id=\"rId1\"/></sheets></workbook>");
             put(z, "xl/_rels/workbook.xml.rels", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
                     + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/></Relationships>");
+            for (int k = 0; k < pngs.size(); k++) {
+                z.putNextEntry(new ZipEntry("xl/media/image" + (k + 1) + ".png"));
+                z.write(pngs.get(k));
+                z.closeEntry();
+            }
+            if (pics) put(z, "xl/worksheets/_rels/sheet1.xml.rels", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+                    + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing\" Target=\"../drawings/drawing1.xml\"/></Relationships>");
+            // sheet
             z.putNextEntry(new ZipEntry("xl/worksheets/sheet1.xml"));
             Writer w = new OutputStreamWriter(z, "UTF-8");
-            w.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
+            w.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" "
+                    + "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
                     + "<sheetViews><sheetView workbookViewId=\"0\"><pane ySplit=\"1\" topLeftCell=\"A2\" activePane=\"bottomLeft\" state=\"frozen\"/></sheetView></sheetViews>"
-                    + "<cols><col min=\"1\" max=\"1\" width=\"18\" customWidth=\"1\"/><col min=\"2\" max=\"2\" width=\"22\" customWidth=\"1\"/><col min=\"3\" max=\"3\" width=\"32\" customWidth=\"1\"/>"
-                    + "<col min=\"4\" max=\"4\" width=\"70\" customWidth=\"1\"/><col min=\"5\" max=\"5\" width=\"30\" customWidth=\"1\"/></cols><sheetData>");
+                    + "<cols><col min=\"1\" max=\"1\" width=\"7\" customWidth=\"1\"/><col min=\"2\" max=\"2\" width=\"18\" customWidth=\"1\"/><col min=\"3\" max=\"3\" width=\"22\" customWidth=\"1\"/>"
+                    + "<col min=\"4\" max=\"4\" width=\"32\" customWidth=\"1\"/><col min=\"5\" max=\"5\" width=\"70\" customWidth=\"1\"/><col min=\"6\" max=\"6\" width=\"30\" customWidth=\"1\"/></cols><sheetData>");
             StringBuilder b = new StringBuilder();
             b.append("<row r=\"1\">");
-            cell(b, "A1", "Date & time"); cell(b, "B1", "App"); cell(b, "C1", "Title"); cell(b, "D1", "Text"); cell(b, "E1", "Package");
+            cell(b, "A1", "Icon"); cell(b, "B1", "Date & time"); cell(b, "C1", "App"); cell(b, "D1", "Title"); cell(b, "E1", "Text"); cell(b, "F1", "Package");
             b.append("</row>");
             w.write(b.toString());
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
-            String line;
+            StringBuilder dr = new StringBuilder();
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
             int r = 1;
             Date d = new Date();
+            List<Integer> rowIcon = new ArrayList<>(); // row number -> icon index, for the drawing
             while ((line = br.readLine()) != null && r < MAX_ROWS) {
                 String[] p = line.split("\t", -1);
                 if (p.length < 4) continue;
@@ -143,17 +189,45 @@ final class NotifArchive {
                 try { when = Long.parseLong(p[0]); } catch (Exception e) { continue; }
                 r++;
                 d.setTime(when);
+                Integer ix = iconIdx.get(p[1]);
+                boolean has = pics && ix != null && ix >= 0 && r - 1 <= ICON_ROWS;
                 b.setLength(0);
-                b.append("<row r=\"").append(r).append("\">");
-                cell(b, "A" + r, fmt.format(d)); cell(b, "B" + r, label(pm, labels, p[1])); cell(b, "C" + r, unesc(p[2]));
-                cell(b, "D" + r, unesc(p[3])); cell(b, "E" + r, p[1]);
+                b.append("<row r=\"").append(r).append("\"").append(has ? " ht=\"30\" customHeight=\"1\"" : "").append(">");
+                cell(b, "B" + r, fmt.format(d)); cell(b, "C" + r, label(pm, labels, p[1])); cell(b, "D" + r, unesc(p[2]));
+                cell(b, "E" + r, unesc(p[3])); cell(b, "F" + r, p[1]);
                 b.append("</row>");
                 w.write(b.toString());
+                if (has) { rowIcon.add(r); rowIcon.add(ix); }
             }
             br.close();
-            w.write("</sheetData></worksheet>");
+            w.write("</sheetData>" + (pics ? "<drawing r:id=\"rId1\"/>" : "") + "</worksheet>");
             w.flush();
             z.closeEntry();
+            if (pics) {
+                // one picture per row, all pointing at the app's single image file
+                StringBuilder rels = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">");
+                for (int k = 0; k < pngs.size(); k++)
+                    rels.append("<Relationship Id=\"rId").append(k + 1).append("\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"../media/image").append(k + 1).append(".png\"/>");
+                rels.append("</Relationships>");
+                put(z, "xl/drawings/_rels/drawing1.xml.rels", rels.toString());
+                z.putNextEntry(new ZipEntry("xl/drawings/drawing1.xml"));
+                Writer dw = new OutputStreamWriter(z, "UTF-8");
+                dw.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><xdr:wsDr xmlns:xdr=\"http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing\" "
+                        + "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">");
+                int id = 1;
+                for (int k = 0; k < rowIcon.size(); k += 2) {
+                    dr.setLength(0);
+                    dr.append("<xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>76200</xdr:colOff><xdr:row>").append(rowIcon.get(k) - 1)
+                            .append("</xdr:row><xdr:rowOff>63500</xdr:rowOff></xdr:from><xdr:ext cx=\"333375\" cy=\"333375\"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id=\"").append(++id)
+                            .append("\" name=\"i").append(id).append("\"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed=\"rId").append(rowIcon.get(k + 1) + 1)
+                            .append("\"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"333375\" cy=\"333375\"/></a:xfrm>")
+                            .append("<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>");
+                    dw.write(dr.toString());
+                }
+                dw.write("</xdr:wsDr>");
+                dw.flush();
+                z.closeEntry();
+            }
             z.close();
             save(c, tmp);
         } catch (Throwable ignored) {
