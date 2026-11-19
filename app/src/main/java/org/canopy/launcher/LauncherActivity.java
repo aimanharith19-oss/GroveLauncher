@@ -269,7 +269,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         root.removeCallbacks(sleepWebRunnable);
         android.webkit.WebView any = null;
         for (android.webkit.WebView wv : webViews.values()) { wv.onResume(); any = wv; }
-        if (any != null && webAsleep) any.resumeTimers();
+        if (any != null) any.resumeTimers();
         webAsleep = false;
     }
 
@@ -1392,7 +1392,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         else wall3d.stop();
     }
 
-    private boolean webForFeed = true;
+    private boolean webForFeed; // false at start: the first time the feed opens, tabs are always woken (they outlive this activity, possibly still frozen)
 
     /** Web tabs only run while the feed is on screen: on the home screen and in the drawer they are frozen (playing media is spared). */
     private void syncWebToFeed() {
@@ -2710,6 +2710,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (wv == null) {
             wv = FeedWeb.create(this, id);
             webViews.put(id, wv);
+            if (feedAmt > 0.02f) { wv.onResume(); wv.resumeTimers(); webAsleep = false; webForFeed = true; } // never start a tab frozen on screen
         }
         return wv;
     }
