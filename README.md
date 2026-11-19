@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.52.1
+- **Notification card is a scrollable list.** The feed's notification card now lists your notifications, newest first, with each app's icon beside it. Five show at a time and the list scrolls inside the card. Tap one to open it, long-press to copy, delete or see everything from that app, or tap the icon for that app's full list.
+
 ### What's new in 1.52.0
 - **Notification history keeps one week; older ones go to a spreadsheet.** Anything older than 7 days is moved out of the feed into `Documents/Grove/Notification history.xlsx` (date & time, app, title, text, package), updated automatically and openable in any spreadsheet app. The "Keep history for" setting is gone.
 

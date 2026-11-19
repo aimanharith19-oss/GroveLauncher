@@ -45,6 +45,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.view.MotionEvent;
 import android.widget.ScrollView;
 import android.widget.TextClock;
 import android.widget.TextView;
@@ -1731,39 +1732,83 @@ public class FeedPage extends LinearLayout {
             col.addView(Ui.text(c, "Nothing yet \u2014 new notifications will be kept here, even after you clear them.", 13, pal.subtext));
             return;
         }
-        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(c);
-        hs.setHorizontalScrollBarEnabled(false);
-        LinearLayout row = new LinearLayout(c);
-        for (final String pkg : apps) {
-            final int n = NotifHistory.recent(pkg, 999).size();
-            LinearLayout cell = new LinearLayout(c);
-            cell.setOrientation(VERTICAL);
-            cell.setGravity(Gravity.CENTER_HORIZONTAL);
-            cell.setPadding(Ui.dp(c, 4), Ui.dp(c, 4), Ui.dp(c, 4), Ui.dp(c, 2));
-            cell.setBackground(Ui.pressable(c, 0x00000000, Ui.dp(c, 14)));
-            android.widget.FrameLayout iconBox = new android.widget.FrameLayout(c);
+        // newest first, the app's icon beside each one; five rows show at a time and the list scrolls
+        final List<NotifHistory.Entry> list = NotifHistory.recent(null, 200);
+        final int rowH = Ui.dp(c, 60);
+        ScrollView sv = new ScrollView(c) {
+            @Override public boolean onTouchEvent(MotionEvent ev) {
+                if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) getParent().requestDisallowInterceptTouchEvent(true);
+                return super.onTouchEvent(ev);
+            }
+            @Override public boolean onInterceptTouchEvent(MotionEvent ev) {
+                if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) getParent().requestDisallowInterceptTouchEvent(true);
+                return super.onInterceptTouchEvent(ev);
+            }
+        };
+        sv.setVerticalScrollBarEnabled(false);
+        sv.setOverScrollMode(OVER_SCROLL_NEVER);
+        LinearLayout box = new LinearLayout(c);
+        box.setOrientation(VERTICAL);
+        sv.addView(box);
+        java.text.DateFormat tf = android.text.format.DateFormat.getTimeFormat(c);
+        for (final NotifHistory.Entry e : list) {
+            LinearLayout r = new LinearLayout(c);
+            r.setGravity(Gravity.CENTER_VERTICAL);
+            r.setPadding(Ui.dp(c, 6), 0, Ui.dp(c, 6), 0);
+            r.setBackground(Ui.pressable(c, 0x00000000, Ui.dp(c, 12)));
             ImageView ic = new ImageView(c);
-            try { ic.setImageDrawable(c.getPackageManager().getApplicationIcon(pkg)); } catch (Exception ignored) { }
-            android.widget.FrameLayout.LayoutParams ilp = new android.widget.FrameLayout.LayoutParams(Ui.dp(c, 40), Ui.dp(c, 40), Gravity.CENTER);
-            iconBox.addView(ic, ilp);
-            TextView count = Ui.text(c, n > 99 ? "99+" : String.valueOf(n), 10, 0xFFFFFFFF);
-            count.setTypeface(Typeface.DEFAULT_BOLD);
-            count.setGravity(Gravity.CENTER);
-            count.setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0);
-            count.setMinWidth(Ui.dp(c, 18));
-            count.setBackground(Ui.round(0xFFE5484D, Ui.dp(c, 9)));
-            iconBox.addView(count, new android.widget.FrameLayout.LayoutParams(-2, Ui.dp(c, 18), Gravity.TOP | Gravity.END));
-            cell.addView(iconBox, new LinearLayout.LayoutParams(Ui.dp(c, 48), Ui.dp(c, 46)));
-            TextView name = Ui.text(c, appLabel(pkg), 11, pal.subtext);
-            name.setSingleLine(true);
-            name.setEllipsize(TextUtils.TruncateAt.END);
-            name.setGravity(Gravity.CENTER);
-            cell.addView(name, new LinearLayout.LayoutParams(Ui.dp(c, 60), -2));
-            cell.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { showNotifs(pkg); } });
-            row.addView(cell);
+            try { ic.setImageDrawable(c.getPackageManager().getApplicationIcon(e.pkg)); } catch (Exception ignored) { }
+            ic.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { showNotifs(e.pkg); } });
+            r.addView(ic, new LinearLayout.LayoutParams(Ui.dp(c, 36), Ui.dp(c, 36)));
+            LinearLayout tx = new LinearLayout(c);
+            tx.setOrientation(VERTICAL);
+            tx.setPadding(Ui.dp(c, 10), 0, Ui.dp(c, 6), 0);
+            TextView t = Ui.text(c, e.title.isEmpty() ? appLabel(e.pkg) : e.title, 14, pal.text);
+            t.setTypeface(Typeface.DEFAULT_BOLD);
+            t.setSingleLine(true);
+            t.setEllipsize(TextUtils.TruncateAt.END);
+            tx.addView(t);
+            if (!e.text.isEmpty()) {
+                TextView b = Ui.text(c, e.text.replace('\n', ' '), 12, pal.subtext);
+                b.setSingleLine(true);
+                b.setEllipsize(TextUtils.TruncateAt.END);
+                tx.addView(b);
+            }
+            r.addView(tx, new LinearLayout.LayoutParams(0, -2, 1));
+            r.addView(Ui.text(c, dayLabel(e.when).equals(dayLabel(System.currentTimeMillis())) ? tf.format(new java.util.Date(e.when)) : dayLabel(e.when), 11, pal.subtext));
+            r.setOnClickListener(new OnClickListener() {
+                @Override public void onClick(View v) {
+                    if (e.open != null) {
+                        try {
+                            if (android.os.Build.VERSION.SDK_INT >= 34) {
+                                android.app.ActivityOptions o = android.app.ActivityOptions.makeBasic();
+                                o.setPendingIntentBackgroundActivityStartMode(android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+                                e.open.send(c, 0, null, null, null, null, o.toBundle());
+                            } else e.open.send();
+                            return;
+                        } catch (Exception ignored) { }
+                    }
+                    openApp(e.pkg);
+                }
+            });
+            r.setOnLongClickListener(new OnLongClickListener() {
+                @Override public boolean onLongClick(View v) {
+                    Ui.dialog(c).setItems(new String[]{"Copy text", "Delete", "All from this app"}, new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface d, int w) {
+                            if (w == 0) {
+                                android.content.ClipboardManager cm = (android.content.ClipboardManager) c.getSystemService(Context.CLIPBOARD_SERVICE);
+                                if (cm != null) cm.setPrimaryClip(android.content.ClipData.newPlainText("notification", (e.title + "\n" + e.text).trim()));
+                                Ui.toast(c, "Copied");
+                            } else if (w == 1) NotifHistory.remove(e);
+                            else showNotifs(e.pkg);
+                        }
+                    }).show();
+                    return true;
+                }
+            });
+            box.addView(r, new LinearLayout.LayoutParams(-1, rowH));
         }
-        hs.addView(row);
-        col.addView(hs);
+        col.addView(sv, new LinearLayout.LayoutParams(-1, Math.min(list.size(), 5) * rowH));
     }
 
     /** All of an app's saved notifications, in full. Tap one to open it; long-press to copy or delete. */
