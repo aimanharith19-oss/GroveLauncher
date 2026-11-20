@@ -177,6 +177,8 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     @Override protected void onStart() {
         super.onStart();
         stopped = false;
+        iconsDark = null; // reapplied below: the system may have reset it while another app was on top
+        try { applyStatusBar(); } catch (Throwable ignored) { }
         // The slow parts of coming back (every widget's update, every web tab) run just after the first frame,
         // so the home screen appears at once when you leave an app.
         root.post(new Runnable() {
@@ -1203,8 +1205,29 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     private boolean nightAtCreate;
 
     /** Status bar shown or hidden depending on where you are: feed, app drawer or home screen (Settings → Home screen). */
+    private Boolean iconsDark;
+
+    /** Status bar icons follow what is under them: dark icons on a light screen, white on a dark one (home = your wallpaper, feed and drawer = the theme). */
+    private void statusIcons(String surface) {
+        boolean lightBg = "home".equals(surface) ? Ui.wallpaperIsLight(this) : !Ui.palette(this).night;
+        if (iconsDark != null && iconsDark == lightBg) return;
+        iconsDark = lightBg;
+        android.view.Window w = getWindow();
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            android.view.WindowInsetsController ic = w.getInsetsController();
+            if (ic != null) ic.setSystemBarsAppearance(lightBg ? android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : 0,
+                    android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+        } else if (android.os.Build.VERSION.SDK_INT >= 23) {
+            //noinspection deprecation
+            int f = w.getDecorView().getSystemUiVisibility();
+            //noinspection deprecation
+            w.getDecorView().setSystemUiVisibility(lightBg ? f | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR : f & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
+    }
+
     void applyStatusBar() {
         String surface = drawer != null && drawer.isOpen() ? "drawer" : feed != null && feedAmt > 0.5f ? "feed" : "home";
+        statusIcons(surface);
         boolean hide = Prefs.statusBarHidden(this, surface);
         if (barHidden != null && barHidden == hide) return;
         barHidden = hide;
