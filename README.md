@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.53.6
+- **Drawer tabs: the selected pill is always shown whole.** The scroll to the selected tab used to run before the strip had been laid out, so it never moved. It now waits for the layout, and only scrolls when the pill isn't already fully in view.
+
 ### What's new in 1.53.5
 - **Drawer tabs scroll properly.** Tabs look as before (the slimmer pills are gone). The strip is now exactly as wide as its tabs, so you can always scroll to the last one and see it in full, and it jumps to the selected tab.
 

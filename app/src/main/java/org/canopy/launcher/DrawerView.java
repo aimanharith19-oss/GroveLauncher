@@ -76,6 +76,7 @@ public class DrawerView extends FrameLayout {
     private final LinearLayout tabBar, frequent, selectBar;
     private final TextView selectCount;
     private final HorizontalScrollView tabScroll;
+    private View revealTab; // the selected tab: shown in full once the strip has been laid out
     private final Ui.Palette pal;
     private final int slop;
     private boolean open;
@@ -155,6 +156,17 @@ public class DrawerView extends FrameLayout {
         // The strip is as wide as its tabs (so it always scrolls all the way to the last one) and is centred when they are few.
         tabBar = new LinearLayout(c);
         tabBar.setGravity(Gravity.CENTER);
+        tabBar.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+            @Override public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
+                final View cur = revealTab;
+                if (cur == null || cur.getParent() != tabBar || tabScroll.getWidth() == 0 || cur.getWidth() == 0) return;
+                revealTab = null;
+                int vw = tabScroll.getWidth(), sx = tabScroll.getScrollX();
+                if (cur.getLeft() - Ui.dp(getContext(), 3) >= sx && cur.getRight() + Ui.dp(getContext(), 3) <= sx + vw) return; // already fully in view
+                int max = Math.max(0, tabBar.getWidth() - vw);
+                tabScroll.scrollTo(Math.max(0, Math.min(max, cur.getLeft() - (vw - cur.getWidth()) / 2)), 0);
+            }
+        });
         tabScroll.addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @Override public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
                 if (tabBar.getMinimumWidth() != r - l) tabBar.setMinimumWidth(r - l);
@@ -686,17 +698,7 @@ public class DrawerView extends FrameLayout {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
         lp.leftMargin = lp.rightMargin = Ui.dp(c, 3);
         tabBar.addView(t, lp);
-        if (on) {
-            // the current tab is always shown in full: scroll the strip so it sits in view (it was cut off at the edge)
-            final View cur = t;
-            tabScroll.post(new Runnable() {
-                @Override public void run() {
-                    int target = cur.getLeft() - (tabScroll.getWidth() - cur.getWidth()) / 2;
-                    int max = Math.max(0, tabBar.getChildAt(tabBar.getChildCount() - 1).getRight() + tabBar.getPaddingRight() - tabScroll.getWidth());
-                    tabScroll.scrollTo(Math.max(0, Math.min(max, target)), 0);
-                }
-            });
-        }
+        if (on) revealTab = t;
     }
 
     private String tabName(String key, String def) {
@@ -1334,8 +1336,6 @@ public class DrawerView extends FrameLayout {
                         box.setTranslationX(dir * w * 0.35f);
                         box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 260))
                                 .setInterpolator(Anim.open(getContext())).start();
-                        View chip = tabBar.getChildAt(Math.min(tabBar.getChildCount() - 1, Math.max(0, tabKeys().indexOf(key))));
-                        if (chip != null) tabScroll.smoothScrollTo(Math.max(0, chip.getLeft() - Ui.dp(getContext(), 24)), 0);
                     }
                 }).start();
     }
