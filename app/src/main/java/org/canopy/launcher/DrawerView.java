@@ -681,6 +681,17 @@ public class DrawerView extends FrameLayout {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
         lp.leftMargin = lp.rightMargin = Ui.dp(c, 3);
         tabBar.addView(t, lp);
+        if (on) {
+            // the current tab is always shown in full: scroll the strip so it sits in view (it was cut off at the edge)
+            final View cur = t;
+            tabScroll.post(new Runnable() {
+                @Override public void run() {
+                    int target = cur.getLeft() - (tabScroll.getWidth() - cur.getWidth()) / 2;
+                    int max = Math.max(0, tabBar.getWidth() - tabScroll.getWidth());
+                    tabScroll.scrollTo(Math.max(0, Math.min(max, target)), 0);
+                }
+            });
+        }
     }
 
     private String tabName(String key, String def) {
