@@ -152,11 +152,16 @@ public class DrawerView extends FrameLayout {
 
         tabScroll = new HorizontalScrollView(c);
         tabScroll.setHorizontalScrollBarEnabled(false);
-        tabScroll.setFillViewport(true);
+        // The strip is as wide as its tabs (so it always scrolls all the way to the last one) and is centred when they are few.
         tabBar = new LinearLayout(c);
         tabBar.setGravity(Gravity.CENTER);
-        tabBar.setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 12), 0);
-        tabScroll.addView(tabBar, new LayoutParams(-1, -2));
+        tabScroll.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+            @Override public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
+                if (tabBar.getMinimumWidth() != r - l) tabBar.setMinimumWidth(r - l);
+            }
+        });
+        tabBar.setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0);
+        tabScroll.addView(tabBar, new LayoutParams(-2, -2));
         // Tab row: when you scroll down the search bar folds into a search icon at the start of this row.
         tabRow = new LinearLayout(c);
         tabRow.setGravity(Gravity.CENTER_VERTICAL); // search icon, tab names and ⋮ all on one centre line
@@ -668,10 +673,8 @@ public class DrawerView extends FrameLayout {
         TextView t = Ui.text(c, name, 15, on ? pal.accent : pal.subtext);
         t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", on ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL));
         t.setGravity(Gravity.CENTER);
-        // an emoji or a letter or two doesn't need a wide pill: slimmer ones leave room for more tabs
-        boolean slim = name.codePointCount(0, name.length()) <= 2;
-        t.setMinWidth(Ui.dp(c, slim ? 44 : 64));
-        t.setPadding(Ui.dp(c, slim ? 12 : 18), Ui.dp(c, 9), Ui.dp(c, slim ? 12 : 18), Ui.dp(c, 9));
+        t.setMinWidth(Ui.dp(c, 64));
+        t.setPadding(Ui.dp(c, 18), Ui.dp(c, 9), Ui.dp(c, 18), Ui.dp(c, 9));
         t.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.accent, 0x2E) : 0x00000000, Ui.dp(c, 20)));
         t.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) { tab = key; refresh(); revealList(); }

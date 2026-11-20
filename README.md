@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.53.5
+- **Drawer tabs scroll properly.** Tabs look as before (the slimmer pills are gone). The strip is now exactly as wide as its tabs, so you can always scroll to the last one and see it in full, and it jumps to the selected tab.
+
 ### What's new in 1.53.4
 - **Drawer tabs: no more cut-off.** Tabs named with just an emoji or a letter or two get a slimmer pill, so more fit; the strip also has a little room at the end and scrolls to the selected tab.
 
