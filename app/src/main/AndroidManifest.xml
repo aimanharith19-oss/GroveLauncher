@@ -19,8 +19,6 @@
     <!-- Keep a web tab's video/audio playing in the background (with a notification you can stop it from). -->
     <!-- 3D wallpaper: read your current wallpaper so Canopy can draw it with depth. Android 13+ only offers
          this through "All files access"; Canopy reads nothing but the wallpaper. Optional. -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />

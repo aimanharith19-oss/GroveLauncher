@@ -103,14 +103,6 @@ final class FeedBackground {
         try { id = android.app.WallpaperManager.getInstance(c).getWallpaperId(android.app.WallpaperManager.FLAG_SYSTEM); } catch (Throwable ignored) { }
         if (cached != null && id == cachedId) return cached;
         Bitmap src = null;
-        try {
-            java.io.File f = Wallpaper3D.file(c);
-            if (f.exists()) {
-                BitmapFactory.Options o = new BitmapFactory.Options();
-                o.inSampleSize = 8;
-                src = BitmapFactory.decodeFile(f.getPath(), o);
-            }
-        } catch (Throwable ignored) { }
         if (src == null) {
             try {
                 android.app.WallpaperManager wm = android.app.WallpaperManager.getInstance(c);

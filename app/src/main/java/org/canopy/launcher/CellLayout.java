@@ -115,48 +115,6 @@ public class CellLayout extends ViewGroup {
         invalidate();
     }
 
-    /**
-     * Widgets marked "behind the wallpaper subject" are drawn first, then the 3D wallpaper's subject layer,
-     * then everything else — so the subject (a person, a mountain…) overlaps those widgets.
-     */
-    @Override protected void dispatchDraw(Canvas c) {
-        LauncherActivity l = LauncherActivity.instance();
-        Wallpaper3D w = l == null ? null : l.wallpaper3D();
-        boolean any = false;
-        if (w != null && w.hasSubjectLoaded()) {
-            for (int i = 0; i < getChildCount(); i++) if (isBehind(getChildAt(i))) { any = true; break; }
-        }
-        if (!any) { super.dispatchDraw(c); return; }
-        long t = getDrawingTime();
-        for (int i = 0; i < getChildCount(); i++) {
-            View v = getChildAt(i);
-            if (v.getVisibility() == VISIBLE && isBehind(v)) drawChild(c, v, t);
-        }
-        int[] me = new int[2], root = new int[2];
-        getLocationInWindow(me);
-        View r = getRootView();
-        r.getLocationInWindow(root);
-        c.save();
-        c.clipRect(0, 0, getWidth(), getHeight());
-        w.drawSubject(c, me[0] - root[0], me[1] - root[1]);
-        c.restore();
-        for (int i = 0; i < getChildCount(); i++) {
-            View v = getChildAt(i);
-            if (v.getVisibility() == VISIBLE && !isBehind(v)) drawChild(c, v, t);
-        }
-    }
-
-    /** Has widgets drawn behind the wallpaper subject (only those pages redraw as the picture moves). */
-    public boolean hasBehind() {
-        for (int i = 0; i < getChildCount(); i++) if (isBehind(getChildAt(i))) return true;
-        return false;
-    }
-
-    private static boolean isBehind(View v) {
-        Object tag = v.getTag();
-        return tag instanceof HomeItem && ((HomeItem) tag).behind && ((HomeItem) tag).type == HomeItem.WIDGET;
-    }
-
     @Override protected void onDraw(Canvas c) {
         if (!hlOn) return;
         if (hlFolder) {

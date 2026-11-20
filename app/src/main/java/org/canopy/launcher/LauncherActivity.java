@@ -149,14 +149,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             wallListener = new android.app.WallpaperManager.OnColorsChangedListener() {
                 @Override public void onColorsChanged(android.app.WallpaperColors colors, int which) {
                     if ((which & android.app.WallpaperManager.FLAG_SYSTEM) == 0) return;
-                    // switched to a live wallpaper (e.g. KLWP): stop drawing our 3D copy over it
-                    boolean live = Wallpaper3D.liveWallpaper(LauncherActivity.this);
-                    if ((wall3d != null && live && Wallpaper3D.usesSystem(LauncherActivity.this)) || (wall3d == null && !live && Wallpaper3D.wanted(LauncherActivity.this))) {
-                        Ui.resetWallpaper();
-                        if (resumed) recreate(); else needsRecreate = true;
-                    }
-                    // a new wallpaper: make it 3D too
-                    if (Wallpaper3D.wanted(LauncherActivity.this) && Wallpaper3D.usesSystem(LauncherActivity.this)) refreshSystemWallpaper();
                     boolean before = Ui.wallpaperIsLight(LauncherActivity.this);
                     Ui.resetWallpaper();
                     if (Ui.wallpaperIsLight(LauncherActivity.this) == before) return;
@@ -180,55 +172,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
     private static java.lang.ref.WeakReference<LauncherActivity> sInstance;
     private android.app.WallpaperManager.OnColorsChangedListener wallListener;
-    private Wallpaper3D wall3d;
-
-    public Wallpaper3D wallpaper3D() { return wall3d; }
-
-    /** Copies the phone's wallpaper (in the background) and redraws it in 3D. */
-    private void refreshSystemWallpaper() {
-        final android.content.Context app = getApplicationContext();
-        App.IO.execute(new Runnable() {
-            @Override public void run() {
-                final boolean ok = Wallpaper3D.copySystem(app);
-                App.MAIN.post(new Runnable() {
-                    @Override public void run() {
-                        if (!ok) return;
-                        if (wall3d != null) wall3d.reload();
-                        else if (resumed) recreate(); else needsRecreate = true;
-                    }
-                });
-            }
-        });
-    }
-
-    /** First time: offer to make the wallpaper 3D (Android needs Canopy to be allowed to read it). */
-    private void maybeAskWallpaperAccess() {
-        if (!Wallpaper3D.wanted(this) || !Wallpaper3D.usesSystem(this) || Wallpaper3D.canReadSystem(this)) return;
-        if (Prefs.sp(this).getBoolean("wall3d_asked", false)) return;
-        if (android.app.WallpaperManager.getInstance(this).getWallpaperInfo() != null) return; // live wallpaper
-        Prefs.sp(this).edit().putBoolean("wall3d_asked", true).apply();
-        Ui.dialog(this).setTitle("Make your wallpaper 3D?")
-                .setMessage("Grove can tilt your wallpaper as you move your phone, with the icons floating in front. "
-                        + "To draw it, Android requires you to let Grove read your wallpaper (shown as \u201CAll files access\u201D). "
-                        + "Grove only reads the wallpaper.")
-                .setPositiveButton("Allow", new android.content.DialogInterface.OnClickListener() {
-                    @Override public void onClick(android.content.DialogInterface d, int w) { requestWallpaperAccess(); }
-                })
-                .setNegativeButton("Not now", null).show();
-    }
-
-    public void requestWallpaperAccess() {
-        if (android.os.Build.VERSION.SDK_INT >= 33) {
-            try {
-                startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                        android.net.Uri.parse("package:" + getPackageName())));
-            } catch (Exception e) {
-                safeStart(new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
-            }
-        } else {
-            requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 20);
-        }
-    }
     static LauncherActivity instance() { return sInstance == null ? null : sInstance.get(); }
 
     @Override protected void onStart() {
@@ -458,15 +401,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                 if (!resumed) return;
                 try {
                 if (blurLayer != null && blurLayer.getVisibility() == View.GONE) blurLayer.setImageDrawable(null); // wallpaper may have changed
-                if (wall3d != null) {
-                    android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
-                    wallSaver = Prefs.sp(LauncherActivity.this).getBoolean("wall3d_powersave", true) && pm != null && pm.isPowerSaveMode();
-                    updateWallMotion();
-                }
-                else if (Wallpaper3D.wanted(LauncherActivity.this) && Wallpaper3D.usesSystem(LauncherActivity.this)
-                        && Wallpaper3D.canReadSystem(LauncherActivity.this)) refreshSystemWallpaper();
-                maybeAskWallpaperAccess();
-                } catch (Throwable ignored) { }
+                                } catch (Throwable ignored) { }
             }
         });
         if (needsRecreate) { needsRecreate = false; recreate(); return; }
@@ -535,7 +470,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     @Override protected void onPause() {
         super.onPause();
         resumed = false;
-        if (wall3d != null) wall3d.stop();
 
         dismissPopup();
     }
@@ -613,7 +547,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             for (android.webkit.WebView wv : webViews.values()) wv.getSettings().setMediaPlaybackRequiresUserGesture(!FeedWeb.autoplay(this));
             return;
         }
-        if ("wall3d_source".equals(key) || "wall3d_asked".equals(key) || "home_pages".equals(key) || "wall3d_powersave".equals(key)) return;
+        if ("home_pages".equals(key)) return;
         if ("transition".equals(key)) { workspace.setTransition(Prefs.transition(this)); return; }
         if (key.startsWith("web_") || key.startsWith("tabname_") || key.startsWith("feed_profile")) {
             if (key.startsWith("tabname_")) drawer.refresh();
@@ -665,29 +599,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
         backdrop = new View(this);
         root.addView(backdrop, new FrameLayout.LayoutParams(-1, -1));
-
-        // 3D wallpaper: Canopy draws your wallpaper itself, slightly behind the screen, and tilts it with the phone.
-        wall3d = null;
-        if (Wallpaper3D.wanted(this) && !(Wallpaper3D.usesSystem(this) && Wallpaper3D.liveWallpaper(this))
-                && (Wallpaper3D.file(this).exists() || (Wallpaper3D.usesSystem(this) && Wallpaper3D.canReadSystem(this)))) {
-            wall3d = new Wallpaper3D(this);
-            root.addView(wall3d, new FrameLayout.LayoutParams(-1, -1));
-            wall3d.setDepthTarget(new Wallpaper3D.DepthTarget() {
-                @Override public void onDepth(float dx, float dy) {
-                    if (homeAnimating) return; // don't fight the return-to-home animation
-                    // icons float a little in front: they move the opposite way
-                    workspace.setTranslationX(dx);
-                    workspace.setTranslationY(dy);
-                    dock.setTranslationX(dx * 0.6f);
-                }
-            });
-            wall3d.setOnMoved(new Runnable() {
-                @Override public void run() {
-                    for (int i = 0; i < store.pageCount(); i++) { CellLayout cl = pageLayout(i); if (cl != null && cl.hasBehind()) cl.invalidate(); }
-                }
-            });
-            if (Wallpaper3D.usesSystem(this)) refreshSystemWallpaper();
-        }
 
         workspace = new Workspace(this, this);
         root.addView(workspace, new FrameLayout.LayoutParams(-1, -1));
@@ -1313,7 +1224,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
     @Override public void onPageScrolled(float pageFloat) {
         indicator.setPosition(pageFloat);
-        if (wall3d != null) wall3d.setPage(pageFloat / Math.max(1f, workspace.getChildCount() - 1));
         if (feed == null) return;
         feedAmt = Math.max(0f, Math.min(1f, 1f - pageFloat));
         // a new motivating line each time you arrive on the feed
@@ -1346,7 +1256,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     /** Shows Canopy's own blurred wallpaper while the feed / drawer is open, where the phone can't blur it. */
     private void updateBlurLayer(float amt, boolean blurOn) {
         if (blurLayer == null) return;
-        boolean need = blurOn && amt > 0.01f && wall3d == null && !windowBlurWorks();
+        boolean need = blurOn && amt > 0.01f && !windowBlurWorks();
         if (!need) { if (blurLayer.getVisibility() != View.GONE) blurLayer.setVisibility(View.GONE); return; }
         if (blurLayer.getDrawable() == null) { // made once (and again after the wallpaper changes, see onResume)
             android.graphics.Bitmap b = FeedBackground.blurredWallpaper(this);
@@ -1383,15 +1293,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         overlayAnim.start();
     }
 
-    /** The tilt sensor runs only while the home screen itself is visible (not under the drawer/feed/folders). */
-    private boolean wallSaver;
-
-    private void updateWallMotion() {
-        if (wall3d == null) return;
-        if (resumed && !wallSaver && !dragging && overlayAmt < 0.99f && feedAmt < 0.99f) wall3d.start();
-        else wall3d.stop();
-    }
-
     private boolean webForFeed; // false at start: the first time the feed opens, tabs are always woken (they outlive this activity, possibly still frozen)
 
     /** Web tabs only run while the feed is on screen: on the home screen and in the drawer they are frozen (playing media is spared). */
@@ -1417,7 +1318,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     private void applyDepth() {
         if (backdrop == null) return;
         syncWebToFeed();
-        updateWallMotion();
         boolean blurOn = Prefs.sp(this).getBoolean("depth_blur", true);
         float amt = Math.max(feedAmt, overlayAmt);
         // feed background (Settings > Feed): dark blur, white blur or a plain colour
@@ -1450,9 +1350,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             try {
                 if (getWindowManager().isCrossWindowBlurEnabled()) getWindow().setBackgroundBlurRadius(wb);
             } catch (Throwable ignored) { }
-            // the 3D wallpaper is drawn by Canopy itself, so blur it directly
-            if (wall3d != null) wall3d.setRenderEffect(wb > 0
-                    ? android.graphics.RenderEffect.createBlurEffect(wb, wb, android.graphics.Shader.TileMode.CLAMP) : null);
         }
         // Blur the home screen itself behind the drawer / folders / widget page.
         int vb = blurOn ? Math.round(overlayAmt * 5f) * Ui.dp(this, 22) / 5 : 0; // stepped, so it isn't re-blurred every frame
@@ -1888,7 +1785,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (!ok) { Ui.toast(this, "Couldn't start the drag \u2014 tap the widget to add it instead"); return; }
         if (Anim.haptics(this)) card.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
         dragging = true;
-        updateWallMotion();
         currentDrag = di;
         if (popup != null) {
             popup.setVisibility(View.INVISIBLE);
@@ -2207,15 +2103,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         entries.add(new MenuEntry(R.drawable.ic_crop, "Crop", new Runnable() {
             @Override public void run() { cropWidget(item, v); }
         }));
-        if (wall3d != null && Wallpaper3D.hasSubject(this) && item.container == HomeItem.DESKTOP) {
-            entries.add(new MenuEntry(R.drawable.ic_layers, item.behind ? "Bring in front of wallpaper subject" : "Put behind wallpaper subject", new Runnable() {
-                @Override public void run() {
-                    item.behind = !item.behind;
-                    store.commit();
-                    for (int i = 0; i < store.pageCount(); i++) { CellLayout cl = pageLayout(i); if (cl != null) cl.invalidate(); }
-                }
-            }));
-        }
         if (item.container == HomeItem.DESKTOP) {
             entries.add(new MenuEntry(R.drawable.ic_layers, item.clickThrough ? "Turn off click-through" : "Click-through (touches pass to what's behind)", new Runnable() {
                 @Override public void run() {
@@ -2293,7 +2180,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             dropBar.setVisibility(View.GONE);
             return;
         }
-        updateWallMotion(); // the 3D wallpaper's per-frame drawing stops while you drag, so the dragged item keeps up with your finger
         if (di.app != null) drawer.close(false);
         if (folderView != null) folderView.setVisibility(View.INVISIBLE);
         if (di.item != null && di.folder == null) v.setVisibility(View.INVISIBLE);
@@ -2302,7 +2188,6 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     private void onDragEnded() {
         if (!dragging) return;
         dragging = false;
-        updateWallMotion();
         edgeDir = 0;
         root.removeCallbacks(edgeRunnable);
         dropBar.setVisibility(View.GONE);

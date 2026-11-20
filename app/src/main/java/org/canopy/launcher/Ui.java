@@ -119,7 +119,6 @@ public final class Ui {
     /** Is the home wallpaper light (so text drawn straight on it should be dark)? Cached; call resetWallpaper() on change. */
     public static boolean wallpaperIsLight(Context c) {
         if (wallLight != null) return wallLight;
-        if (Wallpaper3D.enabled(c)) { wallLight = Wallpaper3D.isLight(c); return wallLight; }
         boolean light = false;
         try {
             if (android.os.Build.VERSION.SDK_INT >= 27) {

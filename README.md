@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.53.0
+- **The 3D wallpaper is gone.** The tilting wallpaper, its depth slider, the wallpaper subject layer and "put widget behind wallpaper subject" are removed, along with the permission prompt to read your wallpaper (the "All files access" permission is dropped too). Your wallpaper is drawn by the system as normal, which also makes dragging apps and widgets smoother.
+
 ### What's new in 1.52.8
 - **Dragging an app or widget keeps up with your finger.** The 3D wallpaper's constant redrawing is paused while you drag, which was making the dragged item trail behind.
 

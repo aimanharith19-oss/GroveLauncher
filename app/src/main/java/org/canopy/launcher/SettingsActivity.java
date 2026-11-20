@@ -42,7 +42,7 @@ import java.util.Set;
 
 /** Nova-style settings, built in code. */
 public class SettingsActivity extends Activity {
-    private static final int REQ_EXPORT = 1, REQ_IMPORT = 2, REQ_WALL3D = 3, REQ_SUBJECT = 4;
+    private static final int REQ_EXPORT = 1, REQ_IMPORT = 2;
 
     private Ui.Palette pal;
     private LinearLayout list;
@@ -443,43 +443,6 @@ public class SettingsActivity extends Activity {
         header("Look & feel");
         if (android.os.Build.VERSION.SDK_INT >= 31) toggle("Material You colours (from wallpaper)", "dynamic_color", true);
         toggle("Blur & dim behind feed, drawer and folders", "depth_blur", true);
-        toggle("3D wallpaper (tilts as you move your phone)", "wall3d", true);
-        if (Wallpaper3D.usesSystem(this) && !Wallpaper3D.canReadSystem(this)) {
-            action("Allow Grove to read your wallpaper", "Needed to make the phone's wallpaper 3D (Android shows it as \u201CAll files access\u201D)", new Runnable() {
-                @Override public void run() {
-                    if (android.os.Build.VERSION.SDK_INT >= 33) {
-                        try { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName()))); }
-                        catch (Exception e) { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)); }
-                    } else requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 20);
-                }
-            });
-        }
-        slider("3D depth", "wall3d_depth", 10, 100, 60, "%");
-        toggle("Stop the tilt effect in Battery Saver", "wall3d_powersave", true);
-        action("Use a different picture for 3D", Wallpaper3D.usesSystem(this) ? "Now: your phone's wallpaper" : "Now: a picture you chose", new Runnable() {
-            @Override public void run() { pick(REQ_WALL3D); }
-        });
-        if (!Wallpaper3D.usesSystem(this)) action("Use my phone's wallpaper again", null, new Runnable() {
-            @Override public void run() {
-                sp.edit().putString("wall3d_source", "system").apply();
-                Wallpaper3D.file(SettingsActivity.this).delete();
-                Ui.toast(SettingsActivity.this, "Back to your phone's wallpaper");
-                needsRecreateLauncher();
-                build();
-            }
-        });
-        action(Wallpaper3D.hasSubject(this) ? "Change wallpaper subject layer" : "Add wallpaper subject layer",
-                "A transparent PNG of the wallpaper's subject (use \u201CCopy subject\u201D / \u201CExtract object\u201D in your gallery). "
-                        + "Then long-press a widget \u2192 Put behind wallpaper subject.", new Runnable() {
-            @Override public void run() { pick(REQ_SUBJECT); }
-        });
-        if (Wallpaper3D.hasSubject(this)) action("Remove wallpaper subject layer", null, new Runnable() {
-            @Override public void run() {
-                Wallpaper3D.fgFile(SettingsActivity.this).delete();
-                needsRecreateLauncher();
-                build();
-            }
-        });
         choice("Home label colour", "label_color", new String[]{"auto", "light", "dark"}, new String[]{"Automatic (black on light wallpapers, white on dark)", "Always white", "Always black"}, "auto");
         toggle("Label shadow", "label_shadow", true);
         choice("Folder shape", "folder_shape", new String[]{"circle", "rounded", "square", "none"},
@@ -1150,24 +1113,11 @@ public class SettingsActivity extends Activity {
         try { startActivityForResult(i, req); } catch (Exception e) { Ui.toast(this, "No picture picker on this phone"); }
     }
 
-    /** Wallpaper files changed: the home screen rebuilds next time it shows. */
-    private void needsRecreateLauncher() {
-        sp.edit().putLong("wall3d_stamp", System.currentTimeMillis()).apply();
-    }
-
     @Override protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
         AppLock.onResult(this, req, res, new Runnable() { @Override public void run() { finish(); } });
         if (res != RESULT_OK || data == null || data.getData() == null) return;
         Uri uri = data.getData();
-        if (req == REQ_WALL3D || req == REQ_SUBJECT) {
-            boolean ok = req == REQ_WALL3D ? Wallpaper3D.save(this, uri) : Wallpaper3D.saveSubject(this, uri);
-            if (ok && req == REQ_WALL3D) sp.edit().putString("wall3d_source", "picked").putBoolean("wall3d", true).apply();
-            Ui.toast(this, ok ? (req == REQ_WALL3D ? "3D wallpaper set" : "Subject layer added \u2014 long-press a widget to put it behind") : "Couldn't open that picture");
-            needsRecreateLauncher();
-            build();
-            return;
-        }
         try {
             if (req == REQ_EXPORT) {
                 JSONObject o = new JSONObject();
