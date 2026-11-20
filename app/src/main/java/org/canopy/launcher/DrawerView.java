@@ -155,7 +155,7 @@ public class DrawerView extends FrameLayout {
         tabScroll.setFillViewport(true);
         tabBar = new LinearLayout(c);
         tabBar.setGravity(Gravity.CENTER);
-        tabBar.setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0);
+        tabBar.setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 12), 0);
         tabScroll.addView(tabBar, new LayoutParams(-1, -2));
         // Tab row: when you scroll down the search bar folds into a search icon at the start of this row.
         tabRow = new LinearLayout(c);
@@ -668,8 +668,10 @@ public class DrawerView extends FrameLayout {
         TextView t = Ui.text(c, name, 15, on ? pal.accent : pal.subtext);
         t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", on ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL));
         t.setGravity(Gravity.CENTER);
-        t.setMinWidth(Ui.dp(c, 64));
-        t.setPadding(Ui.dp(c, 18), Ui.dp(c, 9), Ui.dp(c, 18), Ui.dp(c, 9));
+        // an emoji or a letter or two doesn't need a wide pill: slimmer ones leave room for more tabs
+        boolean slim = name.codePointCount(0, name.length()) <= 2;
+        t.setMinWidth(Ui.dp(c, slim ? 44 : 64));
+        t.setPadding(Ui.dp(c, slim ? 12 : 18), Ui.dp(c, 9), Ui.dp(c, slim ? 12 : 18), Ui.dp(c, 9));
         t.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.accent, 0x2E) : 0x00000000, Ui.dp(c, 20)));
         t.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) { tab = key; refresh(); revealList(); }
@@ -687,7 +689,7 @@ public class DrawerView extends FrameLayout {
             tabScroll.post(new Runnable() {
                 @Override public void run() {
                     int target = cur.getLeft() - (tabScroll.getWidth() - cur.getWidth()) / 2;
-                    int max = Math.max(0, tabBar.getWidth() - tabScroll.getWidth());
+                    int max = Math.max(0, tabBar.getChildAt(tabBar.getChildCount() - 1).getRight() + tabBar.getPaddingRight() - tabScroll.getWidth());
                     tabScroll.scrollTo(Math.max(0, Math.min(max, target)), 0);
                 }
             });
