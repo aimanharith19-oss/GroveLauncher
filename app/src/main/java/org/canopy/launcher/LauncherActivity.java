@@ -128,6 +128,9 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         KeepAliveService.sync(this); // (a background start of the service is refused by Android; this one is allowed)
         loadFeedBg();
         Ui.edgeToEdge(getWindow());
+        // draw under the camera cut-out / status bar area at all times (with the status bar hidden, Android otherwise leaves a bare strip of wallpaper at the top)
+        if (android.os.Build.VERSION.SDK_INT >= 30) getWindow().getAttributes().layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+        else if (android.os.Build.VERSION.SDK_INT >= 28) getWindow().getAttributes().layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         if (!Prefs.sp(this).getBoolean("allow_rotation", false)) {
             setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }

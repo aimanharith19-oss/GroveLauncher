@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.53.2
+- **Fixes the bare strip at the top.** With the status bar hidden (feed and app drawer), a band of undimmed wallpaper showed above the content. The launcher now draws under the top of the screen at all times.
+
 ### What's new in 1.53.1
 - **Status bar icons follow the screen.** Dark icons on a light screen and white icons on a dark one: on the home screen it follows your wallpaper, in the feed and app drawer it follows the theme.
 
