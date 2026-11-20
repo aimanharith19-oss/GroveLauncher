@@ -372,7 +372,7 @@ public class IconView extends View {
                 dragStarted = false;
                 tracking = true;
                 animateScale(0.9f);
-                postDelayed(longPress, ViewConfiguration.getLongPressTimeout());
+                postDelayed(longPress, Anim.longPress());
                 return true;
             case MotionEvent.ACTION_MOVE: {
                 if (!tracking) return true;

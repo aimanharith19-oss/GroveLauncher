@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.52.7
+- **Icons and widgets lift faster.** The hold needed before an app or widget can be moved is now about 0.25 s (it was your phone's long-press delay, often 0.5 s). Scrolling past them still doesn't trigger it.
+
 ### What's new in 1.52.6
 - **The feed keeps 3 days again.** Anything older than 3 days moves to `Documents/Grove/Notification history.xlsx` (the week limit in 1.52.0 is gone).
 

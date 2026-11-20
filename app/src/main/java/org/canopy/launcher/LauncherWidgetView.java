@@ -86,7 +86,7 @@ public class LauncherWidgetView extends AppWidgetHostView {
                 fired = false;
                 dragStarted = false;
                 removeCallbacks(longPress);
-                postDelayed(longPress, ViewConfiguration.getLongPressTimeout());
+                postDelayed(longPress, Anim.longPress());
                 break;
             case MotionEvent.ACTION_MOVE: {
                 float d = (float) Math.hypot(ev.getX() - downX, ev.getY() - downY);

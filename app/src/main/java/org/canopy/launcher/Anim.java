@@ -71,4 +71,7 @@ public final class Anim {
     }
 
     public static boolean haptics(Context c) { return Prefs.sp(c).getBoolean("haptics", true); }
+
+    /** How long to hold before an icon or widget lifts: quicker than the system default (often 500 ms), so moving things feels immediate. */
+    public static int longPress() { return Math.max(180, Math.min(280, android.view.ViewConfiguration.getLongPressTimeout())); }
 }
