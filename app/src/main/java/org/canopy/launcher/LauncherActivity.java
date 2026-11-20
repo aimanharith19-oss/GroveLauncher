@@ -1388,7 +1388,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
     private void updateWallMotion() {
         if (wall3d == null) return;
-        if (resumed && !wallSaver && overlayAmt < 0.99f && feedAmt < 0.99f) wall3d.start();
+        if (resumed && !wallSaver && !dragging && overlayAmt < 0.99f && feedAmt < 0.99f) wall3d.start();
         else wall3d.stop();
     }
 
@@ -1888,6 +1888,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (!ok) { Ui.toast(this, "Couldn't start the drag \u2014 tap the widget to add it instead"); return; }
         if (Anim.haptics(this)) card.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
         dragging = true;
+        updateWallMotion();
         currentDrag = di;
         if (popup != null) {
             popup.setVisibility(View.INVISIBLE);
@@ -2292,6 +2293,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             dropBar.setVisibility(View.GONE);
             return;
         }
+        updateWallMotion(); // the 3D wallpaper's per-frame drawing stops while you drag, so the dragged item keeps up with your finger
         if (di.app != null) drawer.close(false);
         if (folderView != null) folderView.setVisibility(View.INVISIBLE);
         if (di.item != null && di.folder == null) v.setVisibility(View.INVISIBLE);
@@ -2300,6 +2302,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     private void onDragEnded() {
         if (!dragging) return;
         dragging = false;
+        updateWallMotion();
         edgeDir = 0;
         root.removeCallbacks(edgeRunnable);
         dropBar.setVisibility(View.GONE);
