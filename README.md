@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.54.1
+- **Back swipe fixed**: since the Android 17 target, Android stopped calling the launcher's back handler, so swiping back sent you home and left the browser blank. Back works again in the launcher, settings and pop-up player.
+
 ### What's new in 1.54.0
 - **Built for Android 17, needs Android 12 or newer.** The minimum moves from Android 8 (API 26) to Android 12 (API 31) and the target from Android 14 to Android 17 (API 37).
 

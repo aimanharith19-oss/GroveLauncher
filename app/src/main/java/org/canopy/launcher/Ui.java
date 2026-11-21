@@ -260,6 +260,13 @@ public final class Ui {
 
     /** Edge-to-edge, transparent system bars (home screen). */
     @SuppressWarnings("deprecation")
+    /** Targeting Android 16+ turns Activity.onBackPressed() off (back goes to the system, which sent the launcher away and left its web tabs blank): route back to it again. */
+    public static void keepBack(final android.app.Activity a) {
+        if (android.os.Build.VERSION.SDK_INT < 33) return;
+        a.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+            new android.window.OnBackInvokedCallback() { @Override public void onBackInvoked() { a.onBackPressed(); } });
+    }
+
     public static void edgeToEdge(Window w) {
         w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         w.setStatusBarColor(Color.TRANSPARENT);

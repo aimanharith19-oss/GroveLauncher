@@ -122,7 +122,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     // ------------------------------------------------------------------ lifecycle
 
     @Override protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(null);
+        super.onCreate(null); Ui.keepBack(this);
         if (savedInstanceState != null) restorePage = savedInstanceState.getInt("canopy:page", -1);
         nightAtCreate = Ui.night(this);
         KeepAliveService.sync(this); // (a background start of the service is refused by Android; this one is allowed)

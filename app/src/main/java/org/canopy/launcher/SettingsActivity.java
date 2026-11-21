@@ -50,7 +50,7 @@ public class SettingsActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         setTheme(Ui.night(this) ? R.style.Theme_Canopy_SettingsDark : R.style.Theme_Canopy_Settings);
-        super.onCreate(b);
+        super.onCreate(b); Ui.keepBack(this);
         pal = Ui.palette(this);
         sp = Prefs.sp(this);
         // Opened by the installer's "Open" button: go to the home screen instead of settings.

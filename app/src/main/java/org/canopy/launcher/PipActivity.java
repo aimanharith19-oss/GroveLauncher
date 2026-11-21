@@ -101,7 +101,7 @@ public class PipActivity extends Activity {
     };
 
     @Override protected void onCreate(Bundle b) {
-        super.onCreate(b);
+        super.onCreate(b); Ui.keepBack(this);
         tab = getIntent().getStringExtra(EXTRA_TAB);
         LauncherActivity l = LauncherActivity.instance();
         if (tab == null || l == null || l.peekFeedWebView(tab) == null) { finish(); return; }
