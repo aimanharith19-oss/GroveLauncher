@@ -27,7 +27,7 @@ echo "> aapt2 compile"
 "$AAPT2" compile --dir "$SRC/res" -o "$OUT/res.zip"
 echo "> aapt2 link"
 "$AAPT2" link -I "$ANDROID_JAR" --manifest "$OUT/AndroidManifest.xml" --java "$OUT/gen" \
-  --min-sdk-version 26 --target-sdk-version 34 \
+  --min-sdk-version 31 --target-sdk-version 37 \
   --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
   $( [ -d "$SRC/assets" ] && echo -A "$SRC/assets" ) -0 gz \
   -o "$OUT/unsigned.apk" "$OUT/res.zip"

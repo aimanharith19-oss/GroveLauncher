@@ -4,7 +4,7 @@ An open-source Android home screen. It re-creates **Nova Launcher**'s features a
 It has no trackers and no ads. It only goes online for web tabs you add to the feed yourself.
 
 * Licence: GNU GPL v3.0 or later (see `LICENSE`, `NOTICE`). All original code. Nova and Microsoft Launcher are closed source, so no code from either is included.
-* Android 8.0+ (API 26), targets Android 14 (API 34)
+* Android 12+ (API 31), targets Android 17 (API 37)
 * About 150 KB. The only dependency is the Android framework.
 
 ## Home screen (Nova-style)
@@ -27,6 +27,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
+
+### What's new in 1.54.0
+- **Built for Android 17, needs Android 12 or newer.** The minimum moves from Android 8 (API 26) to Android 12 (API 31) and the target from Android 14 to Android 17 (API 37).
 
 ### What's new in 1.53.6
 - **Drawer tabs: the selected pill is always shown whole.** The scroll to the selected tab used to run before the strip had been laid out, so it never moved. It now waits for the layout, and only scrolls when the pill isn't already fully in view.
