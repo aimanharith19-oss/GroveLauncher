@@ -1397,6 +1397,46 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         }
     }
 
+    /** Long-press menu > Arrange in grid: choose how this page's icons are tidied. */
+    private void arrangeMenu(final int page) {
+        String[] opts = {"Fill the gaps (keep order)", "Sort A\u2013Z"};
+        new android.app.AlertDialog.Builder(this).setTitle("Arrange in grid").setItems(opts, new android.content.DialogInterface.OnClickListener() {
+            @Override public void onClick(android.content.DialogInterface d, int which) { arrangePage(page, which == 1); }
+        }).show();
+    }
+
+    /** Re-places this page's icons and folders row by row, around widgets and freely placed items. */
+    private void arrangePage(int page, final boolean sortAz) {
+        int cols = Prefs.gridCols(this), rows = Prefs.gridRows(this);
+        boolean[][] busy = new boolean[cols][rows];
+        final List<HomeItem> move = new ArrayList<>();
+        for (HomeItem it : store.items()) {
+            if (it.container != HomeItem.DESKTOP || it.page != page) continue;
+            if (!it.isFree() && it.spanX == 1 && it.spanY == 1 && it.type != HomeItem.WIDGET) { move.add(it); continue; }
+            if (it.isFree()) continue;
+            for (int x = it.x; x < Math.min(cols, it.x + it.spanX); x++)
+                for (int y = it.y; y < Math.min(rows, it.y + it.spanY); y++) busy[x][y] = true;
+        }
+        if (sortAz) {
+            java.util.Collections.sort(move, new java.util.Comparator<HomeItem>() {
+                @Override public int compare(HomeItem a, HomeItem b) { return String.valueOf(labelFor(a)).compareToIgnoreCase(String.valueOf(labelFor(b))); }
+            });
+        } else {
+            java.util.Collections.sort(move, new java.util.Comparator<HomeItem>() {
+                @Override public int compare(HomeItem a, HomeItem b) { return a.y != b.y ? a.y - b.y : a.x - b.x; }
+            });
+        }
+        int i = 0;
+        for (int y = 0; y < rows && i < move.size(); y++)
+            for (int x = 0; x < cols && i < move.size(); x++) {
+                if (busy[x][y]) continue;
+                HomeItem it = move.get(i++);
+                it.x = x; it.y = y;
+            }
+        store.commit();
+        bindAll();
+    }
+
     @Override public void onEmptyLongPress(float rawX, float rawY) {
         LauncherWidgetView ct = clickThroughAt(rawX, rawY);
         if (ct != null) { onWidgetLongPress(ct); return; }
@@ -1424,6 +1464,9 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                 }
             }));
         }
+        items.add(new MenuEntry(R.drawable.ic_apps, "Arrange in grid", new Runnable() {
+            @Override public void run() { arrangeMenu(page); }
+        }));
         items.add(new MenuEntry(R.drawable.ic_add, "Add page", new Runnable() {
             @Override public void run() { store.addPage(); bindAll(); workspace.snapToPage(store.pageCount() - 1 + glanceOffset()); }
         }));
