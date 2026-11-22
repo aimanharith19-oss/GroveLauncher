@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.54.3
+- **Feed background follows Material You**: new *Material You* choice in Feed > Background (and the feed's background chooser) uses your wallpaper colours, light or dark.
+
 ### What's new in 1.54.2
 - **Arrange in grid**: long-press an empty spot on the home screen > *Arrange in grid* to fill the gaps on that page (keeping the order) or sort its icons A–Z. Widgets and free-placed items stay where they are.
 

@@ -566,8 +566,8 @@ public class SettingsActivity extends Activity {
 
         header("Feed (swipe right from home)");
         textPref("Your name", "user_name", "Used for the greeting on the feed");
-        choice("Background", "feed_bg", new String[]{"dark", "white", "color"},
-                new String[]{"Dark blur", "White blur", "Plain colour"}, Prefs.feedBg(this));
+        choice("Background", "feed_bg", new String[]{"dark", "white", "color", "you"},
+                new String[]{"Dark blur", "White blur", "Plain colour", "Material You"}, Prefs.feedBg(this));
         if ("color".equals(Prefs.feedBg(this))) {
             action("Background colour", String.format("#%06X", Prefs.feedColor(this) & 0xFFFFFF), new Runnable() {
                 @Override public void run() { FeedBackground.pickColor(SettingsActivity.this, new Runnable() { @Override public void run() { build(); } }); }

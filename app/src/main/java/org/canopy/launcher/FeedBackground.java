@@ -19,8 +19,8 @@ import android.widget.LinearLayout;
 final class FeedBackground {
     private FeedBackground() { }
 
-    static final String[] KEYS = {"dark", "white", "color"};
-    static final String[] LABELS = {"Dark blur", "White blur", "Plain colour"};
+    static final String[] KEYS = {"dark", "white", "color", "you"};
+    static final String[] LABELS = {"Dark blur", "White blur", "Plain colour", "Material You (wallpaper colours)"};
 
     /** Quick chooser (from the feed). */
     static void choose(final Context c) {

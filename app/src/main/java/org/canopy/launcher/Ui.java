@@ -146,7 +146,7 @@ public final class Ui {
     public static int feedFg(Context c) {
         String bg = Prefs.feedBg(c);
         if ("white".equals(bg)) return 0xFF111111;
-        if ("color".equals(bg)) return isLight(Prefs.feedColor(c)) ? 0xFF111111 : 0xFFFFFFFF;
+        if ("color".equals(bg) || "you".equals(bg)) return isLight(Prefs.feedColor(c)) ? 0xFF111111 : 0xFFFFFFFF;
         return onWallpaper(c);
     }
 

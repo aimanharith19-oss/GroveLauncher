@@ -79,7 +79,12 @@ public final class Prefs {
     }
 
     public static String feedBg(Context c) { return sp(c).getString("feed_bg", "dark"); }
-    public static int feedColor(Context c) { return sp(c).getInt("feed_color", 0xFF101418); }
+    public static int feedColor(Context c) {
+        if ("you".equals(feedBg(c))) { // follow the wallpaper colours (Material You)
+            try { return c.getColor(Ui.night(c) ? android.R.color.system_accent2_900 : android.R.color.system_accent2_100); } catch (Throwable ignored) { }
+        }
+        return sp(c).getInt("feed_color", 0xFF101418);
+    }
 
     public static String searchBar(Context c) { return sp(c).getString("search_bar", "bottom"); }
     public static String iconShape(Context c) { return sp(c).getString("icon_shape", "system"); }

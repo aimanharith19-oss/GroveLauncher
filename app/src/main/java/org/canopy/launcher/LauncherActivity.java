@@ -1298,6 +1298,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     private void loadFeedBg() {
         feedBgMode = Prefs.feedBg(this);
         feedBgColor = Prefs.feedColor(this);
+        if ("you".equals(feedBgMode)) feedBgMode = "color"; // Material You: the colour comes from Prefs.feedColor
     }
     private boolean feedShown;
     private int lastWindowBlur = -1, lastViewBlur = -1, lastChromeBlur = -1;
