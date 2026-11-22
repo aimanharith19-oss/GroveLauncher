@@ -84,14 +84,14 @@ public final class Ui {
         if (Prefs.dynamicColor(c)) {
             try {
                 if (p.night) {
-                    p.bg = c.getColor(android.R.color.system_neutral1_900);
-                    p.surface = c.getColor(android.R.color.system_neutral1_800);
+                    p.bg = c.getColor(android.R.color.system_accent2_900);
+                    p.surface = c.getColor(android.R.color.system_accent2_800);
                     p.surfaceAlt = c.getColor(android.R.color.system_neutral2_700);
                     p.text = c.getColor(android.R.color.system_neutral1_50);
                     p.subtext = c.getColor(android.R.color.system_neutral2_200);
                 } else {
-                    p.bg = c.getColor(android.R.color.system_neutral1_50);
-                    p.surface = c.getColor(android.R.color.system_neutral1_10);
+                    p.bg = c.getColor(android.R.color.system_accent2_50);
+                    p.surface = c.getColor(android.R.color.system_accent2_10);
                     p.surfaceAlt = c.getColor(android.R.color.system_accent2_100);
                     p.text = c.getColor(android.R.color.system_neutral1_900);
                     p.subtext = c.getColor(android.R.color.system_neutral2_700);
