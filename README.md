@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.54.5
+- **Smoother swipe to the app drawer**: the home-screen blur and the drawer's grid rebuild now wait until the slide has finished instead of running during it.
+
 ### What's new in 1.54.4
 - **App drawer (and menus, settings) now visibly follow Material You**: backgrounds and cards use your wallpaper's colour tint instead of near-grey.
 

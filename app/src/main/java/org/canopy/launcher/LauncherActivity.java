@@ -1317,8 +1317,16 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                 applyDepth();
             }
         });
+        overlayAnimating = true;
+        overlayAnim.addListener(new android.animation.AnimatorListenerAdapter() {
+            private boolean cancelled;
+            @Override public void onAnimationCancel(android.animation.Animator a) { cancelled = true; }
+            @Override public void onAnimationEnd(android.animation.Animator a) { if (!cancelled) { overlayAnimating = false; applyDepth(); } }
+        });
         overlayAnim.start();
     }
+    /** While the drawer / folder slides in or out, the heavy blur of the home screen is skipped (it is applied once the motion ends): that re-render was the stutter. */
+    private boolean overlayAnimating;
 
     private boolean webForFeed; // false at start: the first time the feed opens, tabs are always woken (they outlive this activity, possibly still frozen)
 
@@ -1379,7 +1387,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             } catch (Throwable ignored) { }
         }
         // Blur the home screen itself behind the drawer / folders / widget page.
-        int vb = blurOn ? Math.round(overlayAmt * 5f) * Ui.dp(this, 22) / 5 : 0; // stepped, so it isn't re-blurred every frame
+        int vb = blurOn && !overlayAnimating ? Math.round(overlayAmt * 5f) * Ui.dp(this, 22) / 5 : 0; // stepped, so it isn't re-blurred every frame
         if (vb != lastViewBlur) {
             lastViewBlur = vb;
             android.graphics.RenderEffect fx = vb > 0

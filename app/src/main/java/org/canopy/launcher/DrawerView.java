@@ -1207,7 +1207,8 @@ public class DrawerView extends FrameLayout {
                     .setInterpolator(Anim.open(c)).start();
         }
         scroll.scrollTo(0, 0);
-        if (Prefs.drawerRows(c) > 0) post(new Runnable() { @Override public void run() { refresh(); } });
+        // rebuilding the grid waits for the slide to finish, so the swipe itself stays smooth
+        if (Prefs.drawerRows(c) > 0) postDelayed(new Runnable() { @Override public void run() { if (open) refresh(); } }, Anim.dur(c, Anim.fluid(c) ? 540 : 280));
         revealList();
         if (focusSearch || Prefs.sp(c).getBoolean("drawer_keyboard", false)) expandSearch(true);
     }
