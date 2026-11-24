@@ -76,6 +76,8 @@ public class FeedPage extends LinearLayout {
 
     private final LauncherActivity launcher;
     private final Ui.Palette pal;
+    /** Card colour: tinted with the wallpaper's colours (Material You) so the feed's cards visibly match it. */
+    private final int surf;
     private final LinearLayout cards;
     /** Browser-style tabs: "feed" (the cards) or a web tab id. */
     private final LinearLayout tabBar;
@@ -89,6 +91,11 @@ public class FeedPage extends LinearLayout {
         super(c);
         launcher = c;
         pal = Ui.palette(c);
+        int sc = pal.surface;
+        if (Prefs.dynamicColor(c)) {
+            try { sc = c.getColor(pal.night ? android.R.color.system_accent2_700 : android.R.color.system_accent2_100); } catch (Throwable ignored) { }
+        }
+        surf = sc;
         gp = c.getSharedPreferences("glance", Context.MODE_PRIVATE);
         sp = Prefs.sp(c);
         setOrientation(VERTICAL);
@@ -413,7 +420,7 @@ public class FeedPage extends LinearLayout {
         });
         plus.setContentDescription("New tab");
         plus.setTooltipText("New tab");
-        plus.setBackground(Ui.pressable(c, Ui.alpha(pal.surface, 0x66), Ui.dp(c, 18)));
+        plus.setBackground(Ui.pressable(c, Ui.alpha(surf, 0x66), Ui.dp(c, 18)));
         plus.setImageTintList(ColorStateList.valueOf(pal.text));
         LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(Ui.dp(c, 36), Ui.dp(c, 36));
         plp.leftMargin = Ui.dp(c, 4);
@@ -440,7 +447,7 @@ public class FeedPage extends LinearLayout {
         pill.setGravity(Gravity.CENTER_VERTICAL);
         pill.setPadding(Ui.dp(c, 6), Ui.dp(c, 4), Ui.dp(c, 6), Ui.dp(c, 4));
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-        bg.setColor(has ? Ui.alpha(pal.surface, 0xF2) : Ui.alpha(pal.surface, 0x66));
+        bg.setColor(has ? Ui.alpha(surf, 0xF2) : Ui.alpha(surf, 0x66));
         bg.setCornerRadius(Ui.dp(c, 18));
         bg.setStroke(Ui.dp(c, 1.5f), Ui.alpha(pal.accent, has ? 0xFF : 0x99));
         pill.setBackground(bg);
@@ -488,7 +495,7 @@ public class FeedPage extends LinearLayout {
         iv.setImageDrawable(tabIcon(id, false));
         int p = Ui.dp(c, 6);
         iv.setPadding(p, p, p, p);
-        iv.setBackground(Ui.pressable(c, Ui.alpha(pal.surface, 0x66), Ui.dp(c, 18)));
+        iv.setBackground(Ui.pressable(c, Ui.alpha(surf, 0x66), Ui.dp(c, 18)));
         AppInfo a = FeedWeb.appOf(c, id);
         iv.setContentDescription(a != null ? a.label : "App");
         iv.setTooltipText(a != null ? a.label : "App");
@@ -496,7 +503,7 @@ public class FeedPage extends LinearLayout {
         if (on) {
             android.graphics.drawable.GradientDrawable ring = new android.graphics.drawable.GradientDrawable();
             ring.setCornerRadius(Ui.dp(c, 18));
-            ring.setColor(Ui.alpha(pal.surface, 0xF2));
+            ring.setColor(Ui.alpha(surf, 0xF2));
             ring.setStroke(Ui.dp(c, 2), pal.accent);
             iv.setBackground(ring);
             iv.setElevation(Ui.dp(c, 2));
@@ -568,7 +575,7 @@ public class FeedPage extends LinearLayout {
         final boolean iconOnly = FeedWeb.prefs(c).getBoolean("web_icon_only", false) && !"feed".equals(id);
         boolean closable = !"feed".equals(id) && !iconOnly; // icon-only tabs close from the long-press menu
         chip.setPadding(Ui.dp(c, iconOnly ? 10 : 12), Ui.dp(c, 7), Ui.dp(c, iconOnly ? 10 : closable ? 6 : 14), Ui.dp(c, 7));
-        chip.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.surface, 0xF2) : Ui.alpha(pal.surface, 0x66), Ui.dp(c, 18)));
+        chip.setBackground(Ui.pressable(c, on ? Ui.alpha(surf, 0xF2) : Ui.alpha(surf, 0x66), Ui.dp(c, 18)));
         if (on) chip.setElevation(Ui.dp(c, 2));
         ImageView iv = new ImageView(c);
         if (favicon != null) iv.setImageBitmap(favicon);
@@ -688,7 +695,7 @@ public class FeedPage extends LinearLayout {
 
         LinearLayout bar = new LinearLayout(c);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setBackground(Ui.round(Ui.alpha(pal.surface, 0xF2), Ui.dp(c, 22)));
+        bar.setBackground(Ui.round(Ui.alpha(surf, 0xF2), Ui.dp(c, 22)));
         bar.setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0);
         int b = Ui.dp(c, 38);
         bar.addView(FeedWeb.tool(c, R.drawable.ic_back, pal.text, "Back", new OnClickListener() {
@@ -739,7 +746,7 @@ public class FeedPage extends LinearLayout {
         webPane.addView(pb, plp);
 
         android.widget.FrameLayout frame = new android.widget.FrameLayout(c);
-        frame.setBackground(Ui.round(pal.surface, Ui.dp(c, 18)));
+        frame.setBackground(Ui.round(surf, Ui.dp(c, 18)));
         frame.setClipToOutline(true);
         frame.addView(wv, new android.widget.FrameLayout.LayoutParams(-1, -1));
         attachPullToRefresh(frame, wv);
@@ -758,7 +765,7 @@ public class FeedPage extends LinearLayout {
         ind.setImageDrawable(Ui.tinted(c, R.drawable.ic_refresh, pal.accent));
         int p = Ui.dp(c, 9);
         ind.setPadding(p, p, p, p);
-        ind.setBackground(Ui.round(pal.surface, size / 2));
+        ind.setBackground(Ui.round(surf, size / 2));
         ind.setElevation(Ui.dp(c, 6));
         ind.setTranslationY(-size - Ui.dp(c, 8));
         ind.setVisibility(INVISIBLE);
@@ -1135,18 +1142,18 @@ public class FeedPage extends LinearLayout {
         LinearLayout actions = new LinearLayout(c);
         actions.setGravity(Gravity.CENTER);
         actions.setPadding(0, Ui.dp(c, 16), 0, 0);
-        TextView add = Ui.button(c, "+ Add widget", Ui.alpha(pal.surface, 0xEB), pal.text);
+        TextView add = Ui.button(c, "+ Add widget", Ui.alpha(surf, 0xEB), pal.text);
         add.setTextSize(14);
         add.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { launcher.showWidgetPicker(true); } });
         actions.addView(add);
 
-        TextView edit = Ui.button(c, "Edit feed", Ui.alpha(pal.surface, 0xEB), pal.text);
+        TextView edit = Ui.button(c, "Edit feed", Ui.alpha(surf, 0xEB), pal.text);
         edit.setTextSize(14);
         edit.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { editFeed(); } });
         LinearLayout.LayoutParams elp = new LinearLayout.LayoutParams(-2, -2);
         elp.leftMargin = Ui.dp(c, 10);
         actions.addView(edit, elp);
-        TextView bg = Ui.button(c, "Background", Ui.alpha(pal.surface, 0xEB), pal.text);
+        TextView bg = Ui.button(c, "Background", Ui.alpha(surf, 0xEB), pal.text);
         bg.setTextSize(14);
         bg.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { FeedBackground.choose(getContext()); } });
         LinearLayout.LayoutParams bglp = new LinearLayout.LayoutParams(-2, -2);
@@ -1173,7 +1180,7 @@ public class FeedPage extends LinearLayout {
         Context c = getContext();
         LinearLayout card = new LinearLayout(c);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackground(Ui.round(Ui.alpha(pal.surface, 0xEB), Ui.dp(c, 22)));
+        card.setBackground(Ui.round(Ui.alpha(surf, 0xEB), Ui.dp(c, 22)));
         int p = Ui.dp(c, 14);
         card.setPadding(p, Ui.dp(c, 6), Ui.dp(c, 4), p);
         LinearLayout head = new LinearLayout(c);

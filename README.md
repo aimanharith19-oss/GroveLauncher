@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.55.3
+- **Feed cards, buttons and bars follow Material You**: they are now tinted with your wallpaper colours (before, light mode showed near-white cards).
+
 ### What's new in 1.55.2
 - **Feed follows Material You** by default (Feed > Background > Material You); phones that still had the old dark default are switched once, and you can pick another background any time.
 - **Icon pack picker**: the first icon can be chosen (the search box no longer grabs focus and opens the keyboard when the picker opens).
