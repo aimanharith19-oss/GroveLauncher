@@ -106,6 +106,20 @@ public final class Ui {
         return p;
     }
 
+    private static int smallPhone = -1;
+    /** True on phones under 6.5 inches (screen diagonal): the home screen then uses slightly smaller icons and one row fewer by default. */
+    public static boolean smallPhone(Context c) {
+        if (smallPhone < 0) {
+            android.util.DisplayMetrics m = c.getResources().getDisplayMetrics();
+            double w = m.widthPixels / (double) m.xdpi, h = m.heightPixels / (double) m.ydpi;
+            smallPhone = Math.sqrt(w * w + h * h) < 6.5 ? 1 : 0;
+        }
+        return smallPhone == 1;
+    }
+
+    /** Size factor for home icons: 0.9 on small phones, so the grid and dock don't feel cramped. */
+    public static float compact(Context c) { return smallPhone(c) ? 0.9f : 1f; }
+
     public static boolean isLight(int color) {
         double l = 0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color);
         return l > 170;

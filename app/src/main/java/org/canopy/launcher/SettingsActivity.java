@@ -591,10 +591,10 @@ public class SettingsActivity extends Activity {
                 catch (Exception e) { startActivity(new Intent(Settings.ACTION_SETTINGS)); }
             }
         });
-        action("Back up layout & settings", "Saves a .json file wherever you choose", new Runnable() {
+        action("Back up everything", "Settings, layout, song & notification history, icons \u2014 one .zip", new Runnable() {
             @Override public void run() {
                 Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
-                        .setType("application/json").putExtra(Intent.EXTRA_TITLE, "canopy-backup.json");
+                        .setType("application/zip").putExtra(Intent.EXTRA_TITLE, "grove-backup.zip");
                 startActivityForResult(i, REQ_EXPORT);
             }
         });
@@ -1120,51 +1120,20 @@ public class SettingsActivity extends Activity {
         Uri uri = data.getData();
         try {
             if (req == REQ_EXPORT) {
-                JSONObject o = new JSONObject();
-                JSONObject prefs = new JSONObject();
-                for (Map.Entry<String, ?> e : sp.getAll().entrySet()) {
-                    Object v = e.getValue();
-                    if (v instanceof Set) {
-                        org.json.JSONArray a = new org.json.JSONArray();
-                        for (Object s : (Set<?>) v) a.put(String.valueOf(s));
-                        prefs.put(e.getKey(), new JSONObject().put("set", a));
-                    } else {
-                        prefs.put(e.getKey(), v);
-                    }
-                }
-                o.put("format", "canopy-backup-1");
-                o.put("prefs", prefs);
-                o.put("home", new JSONObject(HomeStore.get(this).toJson()));
                 OutputStream out = getContentResolver().openOutputStream(uri);
-                out.write(o.toString(2).getBytes(StandardCharsets.UTF_8));
+                Backup.write(this, out);
                 out.close();
                 Ui.toast(this, "Backup saved");
             } else if (req == REQ_IMPORT) {
                 InputStream in = getContentResolver().openInputStream(uri);
-                JSONObject o = new JSONObject(HomeStore.readAll(in));
+                boolean full = Backup.restore(this, in);
                 in.close();
-                if (!"canopy-backup-1".equals(o.optString("format"))) throw new Exception("Not a Grove backup");
-                JSONObject prefs = o.getJSONObject("prefs");
-                SharedPreferences.Editor ed = sp.edit().clear();
-                Iterator<String> keys = prefs.keys();
-                while (keys.hasNext()) {
-                    String k = keys.next();
-                    Object v = prefs.get(k);
-                    if (v instanceof Boolean) ed.putBoolean(k, (Boolean) v);
-                    else if (v instanceof Integer) ed.putInt(k, (Integer) v);
-                    else if (v instanceof Long) ed.putLong(k, (Long) v);
-                    else if (v instanceof Double) ed.putFloat(k, ((Double) v).floatValue());
-                    else if (v instanceof JSONObject && ((JSONObject) v).has("set")) {
-                        org.json.JSONArray a = ((JSONObject) v).getJSONArray("set");
-                        java.util.HashSet<String> s = new java.util.HashSet<>();
-                        for (int i = 0; i < a.length(); i++) s.add(a.getString(i));
-                        ed.putStringSet(k, s);
-                    } else ed.putString(k, String.valueOf(v));
-                }
-                ed.apply();
-                HomeStore.get(this).importJson(o.getJSONObject("home").toString());
-                Ui.toast(this, "Backup restored (widgets need to be re-added)");
-                build();
+                Ui.toast(this, full ? "Backup restored. Restarting\u2026 (widgets need to be re-added)" : "Backup restored (widgets need to be re-added)");
+                // the song / notification history and other data are held in memory: a restart makes the launcher read them again
+                if (full) new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override public void run() { android.os.Process.killProcess(android.os.Process.myPid()); }
+                }, 1500);
+                else build();
             }
         } catch (Exception e) {
             Ui.toast(this, "Failed: " + e.getMessage());

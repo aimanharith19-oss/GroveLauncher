@@ -28,6 +28,10 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.55.0
+- **Back up everything**: *Back up everything* now saves one .zip with settings, home layout, **song history**, notification history and archive, website history, feed cards, usage and custom icons. Restore reads it back (and still reads old .json backups); the launcher restarts itself after a full restore.
+- **Better on small phones (under 6.5\")**: icons and dock are 10% smaller, default grid is 5 rows with 11 sp labels, and the search bar is slimmer with a one-line label. Your own settings still win.
+
 ### What's new in 1.54.5
 - **Smoother swipe to the app drawer**: the home-screen blur and the drawer's grid rebuild now wait until the slide has finished instead of running during it.
 

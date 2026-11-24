@@ -33,7 +33,7 @@ public final class Prefs {
 
     // Home screen
     public static int gridCols(Context c) { return sp(c).getInt("grid_cols", 5); }
-    public static int gridRows(Context c) { return sp(c).getInt("grid_rows", 6); }
+    public static int gridRows(Context c) { return sp(c).getInt("grid_rows", Ui.smallPhone(c) ? 5 : 6); }
     public static boolean showLabels(Context c) { return sp(c).getBoolean("show_labels", true); }
     public static int iconScale(Context c) { return sp(c).getInt("icon_scale", 100); }
     public static boolean pageIndicator(Context c) { return sp(c).getBoolean("page_indicator", true); }
@@ -41,7 +41,7 @@ public final class Prefs {
     public static boolean glanceEnabled(Context c) { return sp(c).getBoolean("glance", true); }
     public static String userName(Context c) { return sp(c).getString("user_name", ""); }
 
-    public static int labelSize(Context c) { return sp(c).getInt("label_size", 12); }
+    public static int labelSize(Context c) { return sp(c).getInt("label_size", Ui.smallPhone(c) ? 11 : 12); }
     public static boolean desktopLocked(Context c) { return sp(c).getBoolean("desktop_lock", false); }
     public static boolean infiniteScroll(Context c) { return sp(c).getBoolean("infinite_scroll", false); }
     public static String transition(Context c) { return sp(c).getString("transition", "slide"); }

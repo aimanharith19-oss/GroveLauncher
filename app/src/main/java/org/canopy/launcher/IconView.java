@@ -93,7 +93,7 @@ public class IconView extends View {
         Ui.Palette pal = Ui.palette(c);
         float scale = (style == STYLE_DRAWER ? Prefs.drawerIconScale(c) : Prefs.iconScale(c)) / 100f;
         int base = style == STYLE_GLANCE ? 44 : style == STYLE_FOLDER ? 50 : 52;
-        iconSize = Math.round(Ui.dp(c, base) * scale);
+        iconSize = Math.round(Ui.dp(c, base) * scale * (style == STYLE_DRAWER ? 1f : Ui.compact(c)));
         showLabel = (style == STYLE_DRAWER && Prefs.drawerLabels(c)) || style == STYLE_FOLDER || style == STYLE_GLANCE
                 || (style == STYLE_HOME && Prefs.showLabels(c))
                 || (style == STYLE_DOCK && Prefs.sp(c).getBoolean("dock_labels", false));

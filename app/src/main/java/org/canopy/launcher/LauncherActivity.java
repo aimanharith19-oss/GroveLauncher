@@ -617,11 +617,14 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         searchPill.setCompoundDrawablesRelativeWithIntrinsicBounds(Ui.tinted(this, R.drawable.ic_search, wl ? 0xEE111111 : 0xEEFFFFFF), null, null, null);
         searchPill.setCompoundDrawablePadding(Ui.dp(this, 10));
         searchPill.setGravity(Gravity.CENTER_VERTICAL);
+        searchPill.setSingleLine(true);
+        searchPill.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        if (Ui.smallPhone(this)) searchPill.setTextSize(14);
         searchPill.setPadding(Ui.dp(this, 18), 0, Ui.dp(this, 18), 0);
         searchPill.setBackground(Ui.pressable(this, wl ? 0x59FFFFFF : 0x40000000, Ui.dp(this, 24)));
         searchPill.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { openSearch(""); } });
         searchPill.setVisibility("none".equals(Prefs.searchBar(this)) ? View.GONE : View.VISIBLE);
-        root.addView(searchPill, new FrameLayout.LayoutParams(-1, Ui.dp(this, 46),
+        root.addView(searchPill, new FrameLayout.LayoutParams(-1, Ui.dp(this, Ui.smallPhone(this) ? 42 : 46),
                 "top".equals(Prefs.searchBar(this)) ? Gravity.TOP : Gravity.BOTTOM));
 
         dock = new DockView(this, Prefs.dockCount(this), dockHeight(), cellDrag);
@@ -651,7 +654,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         layoutChrome();
     }
 
-    private int iconPx() { return Math.round(Ui.dp(this, 52) * Prefs.iconScale(this) / 100f); }
+    private int iconPx() { return Math.round(Ui.dp(this, 52) * Ui.compact(this) * Prefs.iconScale(this) / 100f); }
     private int dockHeight() { return iconPx() + Ui.dp(this, 22); }
 
     private void layoutChrome() {
