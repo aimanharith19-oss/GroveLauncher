@@ -90,8 +90,8 @@ public final class Prefs {
     public static String feedBg(Context c) {
         SharedPreferences p = sp(c);
         // 1.55.2: the feed follows Material You unless you pick something else (one-time switch of the old default)
-        if (!p.getBoolean("feed_you_set", false)) {
-            p.edit().putBoolean("feed_you_set", true).putString("feed_bg", dynamicColor(c) ? "you" : p.getString("feed_bg", "dark")).commit();
+        if (!p.getBoolean("feed_you_set2", false)) {
+            p.edit().putBoolean("feed_you_set2", true).putString("feed_bg", dynamicColor(c) ? "you" : p.getString("feed_bg", "dark")).commit();
         }
         return p.getString("feed_bg", "you");
     }
