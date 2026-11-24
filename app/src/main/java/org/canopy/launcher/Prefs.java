@@ -27,6 +27,15 @@ public final class Prefs {
 
     private Prefs() {}
 
+    /** getLong that survives a value stored as an int (an old restore wrote whole numbers as ints). */
+    public static long getLong(SharedPreferences p, String key, long def) {
+        try { return p.getLong(key, def); }
+        catch (ClassCastException e) {
+            try { long v = p.getInt(key, (int) def); p.edit().remove(key).putLong(key, v).apply(); return v; }
+            catch (ClassCastException e2) { p.edit().remove(key).apply(); return def; }
+        }
+    }
+
     public static SharedPreferences sp(Context c) {
         return c.getApplicationContext().getSharedPreferences(NAME, Context.MODE_PRIVATE);
     }

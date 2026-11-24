@@ -101,7 +101,9 @@ final class Backup {
                 JSONArray a = new JSONArray();
                 for (Object s : (Set<?>) v) a.put(String.valueOf(s));
                 prefs.put(e.getKey(), new JSONObject().put("set", a));
-            } else prefs.put(e.getKey(), v);
+            } else if (v instanceof Long) prefs.put(e.getKey(), new JSONObject().put("long", ((Long) v).longValue()));
+            else if (v instanceof Float) prefs.put(e.getKey(), new JSONObject().put("float", ((Float) v).doubleValue()));
+            else prefs.put(e.getKey(), v);
         }
         return prefs;
     }
@@ -115,6 +117,8 @@ final class Backup {
             if (v instanceof Boolean) ed.putBoolean(k, (Boolean) v);
             else if (v instanceof Integer) ed.putInt(k, (Integer) v);
             else if (v instanceof Long) ed.putLong(k, (Long) v);
+            else if (v instanceof JSONObject && ((JSONObject) v).has("long")) ed.putLong(k, ((JSONObject) v).getLong("long"));
+            else if (v instanceof JSONObject && ((JSONObject) v).has("float")) ed.putFloat(k, (float) ((JSONObject) v).getDouble("float"));
             else if (v instanceof Double) ed.putFloat(k, ((Double) v).floatValue());
             else if (v instanceof JSONObject && ((JSONObject) v).has("set")) {
                 JSONArray a = ((JSONObject) v).getJSONArray("set");

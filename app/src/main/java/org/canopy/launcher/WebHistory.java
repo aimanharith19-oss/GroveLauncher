@@ -150,7 +150,7 @@ final class WebHistory {
     /** Quietly links with the browser at most every 15 minutes while the launcher is used. */
     static void autoSync(final Context c) {
         if (!Prefs.sp(c).getBoolean("browser_link", true) || !browserInstalled(c)) return;
-        long last = Prefs.sp(c).getLong("browser_link_at", 0);
+        long last = Prefs.getLong(Prefs.sp(c), "browser_link_at", 0);
         if (System.currentTimeMillis() - last < 15 * 60 * 1000L) return;
         Prefs.sp(c).edit().putLong("browser_link_at", System.currentTimeMillis()).apply();
         App.IO.execute(new Runnable() { @Override public void run() { sync(c); } });

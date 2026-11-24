@@ -51,7 +51,7 @@ public class App extends Application {
     /** Clears the cache folders once every 7 days; files touched in the last hour are left alone as they may be in use. */
     static void weeklyCacheClear(final android.content.Context c) {
         final long now = System.currentTimeMillis();
-        if (now - Prefs.sp(c).getLong("cache_cleared_at", 0) < 7L * 24 * 3600 * 1000) return;
+        if (now - Prefs.getLong(Prefs.sp(c), "cache_cleared_at", 0) < 7L * 24 * 3600 * 1000) return;
         Prefs.sp(c).edit().putLong("cache_cleared_at", now).apply();
         IO.execute(new Runnable() {
             @Override public void run() {

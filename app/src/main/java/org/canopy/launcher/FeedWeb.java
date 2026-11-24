@@ -304,7 +304,7 @@ final class FeedWeb {
             android.content.pm.PackageInfo pi = c.getPackageManager().getPackageInfo(c.getPackageName(), 0);
             ver = pi.lastUpdateTime;
         } catch (Exception ignored) { }
-        long lastBoot = p.getLong("boot_min", -1), lastVer = p.getLong("installed_at", -1);
+        long lastBoot = Prefs.getLong(p, "boot_min", -1), lastVer = Prefs.getLong(p, "installed_at", -1);
         fresh = Math.abs(boot - lastBoot) > 1 || ver != lastVer;
         p.edit().putLong("boot_min", boot).putLong("installed_at", ver).apply();
         return fresh;
