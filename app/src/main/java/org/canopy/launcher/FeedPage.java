@@ -91,11 +91,7 @@ public class FeedPage extends LinearLayout {
         super(c);
         launcher = c;
         pal = Ui.palette(c);
-        int sc = pal.surface;
-        if (Prefs.dynamicColor(c)) {
-            try { sc = c.getColor(pal.night ? android.R.color.system_accent2_700 : android.R.color.system_accent2_100); } catch (Throwable ignored) { }
-        }
-        surf = sc;
+        surf = pal.surface; // the same card colour as the app drawer
         gp = c.getSharedPreferences("glance", Context.MODE_PRIVATE);
         sp = Prefs.sp(c);
         setOrientation(VERTICAL);

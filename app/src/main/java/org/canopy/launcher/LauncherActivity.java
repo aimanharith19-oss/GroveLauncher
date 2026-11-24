@@ -1371,7 +1371,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (feedAmt >= overlayAmt && feedAmt > 0f && "white".equals(feedBgMode)) {
             back = android.graphics.Color.argb((int) (feedAmt * (blurOn ? 0xB8 : 0xE6)), 255, 255, 255);
         } else if (feedAmt >= overlayAmt && feedAmt > 0f && "color".equals(feedBgMode)) {
-            back = Ui.alpha(feedBgColor, Math.round(feedAmt * 255));
+            back = Ui.alpha(feedBgColor, Math.round(feedAmt * (("you".equals(Prefs.feedBg(this)) ? Prefs.drawerOpacity(this) : 100) * 2.55f)));
         } else {
             back = android.graphics.Color.argb((int) (amt * (blurOn ? 120 : 150)), 0, 0, 0);
         }

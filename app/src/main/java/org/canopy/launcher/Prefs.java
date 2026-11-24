@@ -97,7 +97,7 @@ public final class Prefs {
     }
     public static int feedColor(Context c) {
         if ("you".equals(feedBg(c))) { // follow the wallpaper colours (Material You)
-            try { return c.getColor(Ui.night(c) ? android.R.color.system_accent2_900 : android.R.color.system_accent2_100); } catch (Throwable ignored) { }
+            return Ui.palette(c).bg; // exactly the app drawer's background colour
         }
         return sp(c).getInt("feed_color", 0xFF101418);
     }

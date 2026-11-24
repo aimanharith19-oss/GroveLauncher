@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.55.4
+- **Feed has the same design as the app drawer**: the Material You feed background is the drawer's own colour and opacity, and its cards use the drawer's card colour.
+
 ### What's new in 1.55.3
 - **Feed cards, buttons and bars follow Material You**: they are now tinted with your wallpaper colours (before, light mode showed near-white cards).
 
