@@ -93,7 +93,7 @@ public class FeedPage extends LinearLayout {
         pal = Ui.palette(c);
         int sc = pal.surface;
         if (Prefs.dynamicColor(c)) { // Material You: solid cards in the wallpaper's secondary tone (peach, blue… whatever your wallpaper gives)
-            try { sc = 0xFF000000 | (c.getColor(pal.night ? android.R.color.system_accent2_800 : android.R.color.system_accent2_10) & 0xFFFFFF); } catch (Throwable ignored) { }
+            try { sc = 0xFF000000 | (c.getColor(pal.night ? android.R.color.system_accent2_800 : android.R.color.system_accent2_50) & 0xFFFFFF); } catch (Throwable ignored) { }
         }
         surf = sc;
         gp = c.getSharedPreferences("glance", Context.MODE_PRIVATE);
