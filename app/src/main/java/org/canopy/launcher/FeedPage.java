@@ -91,7 +91,11 @@ public class FeedPage extends LinearLayout {
         super(c);
         launcher = c;
         pal = Ui.palette(c);
-        surf = pal.surface; // the same card colour as the app drawer
+        int sc = pal.surface;
+        if (Prefs.dynamicColor(c)) { // Material You: solid cards in the wallpaper's secondary tone (peach, blue… whatever your wallpaper gives)
+            try { sc = 0xFF000000 | (c.getColor(pal.night ? android.R.color.system_accent2_800 : android.R.color.system_accent2_100) & 0xFFFFFF); } catch (Throwable ignored) { }
+        }
+        surf = sc;
         gp = c.getSharedPreferences("glance", Context.MODE_PRIVATE);
         sp = Prefs.sp(c);
         setOrientation(VERTICAL);
@@ -1176,7 +1180,7 @@ public class FeedPage extends LinearLayout {
         Context c = getContext();
         LinearLayout card = new LinearLayout(c);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackground(Ui.round(Ui.alpha(surf, 0xEB), Ui.dp(c, 22)));
+        card.setBackground(Ui.round(surf, Ui.dp(c, 22))); // solid, so the wallpaper behind never greys it
         int p = Ui.dp(c, 14);
         card.setPadding(p, Ui.dp(c, 6), Ui.dp(c, 4), p);
         LinearLayout head = new LinearLayout(c);

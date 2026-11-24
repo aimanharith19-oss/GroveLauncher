@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.55.6
+- **Feed cards are solid Material You colour** (the wallpaper's secondary tone, same family as the drawer) instead of a see-through card that turned grey over the dark wallpaper.
+
 ### What's new in 1.55.5
 - **Feed now really switches to the Material You look** (the drawer's peach/wallpaper colour with matching cards): everyone is moved once more from "Dark blur" to Material You; change it back in Feed > Background if you prefer.
 
