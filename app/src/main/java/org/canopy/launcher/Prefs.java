@@ -87,7 +87,14 @@ public final class Prefs {
         return Ui.alpha(col, Math.round(Math.max(20, Math.min(100, folderBgOpacity(c))) * 2.55f));
     }
 
-    public static String feedBg(Context c) { return sp(c).getString("feed_bg", "dark"); }
+    public static String feedBg(Context c) {
+        SharedPreferences p = sp(c);
+        // 1.55.2: the feed follows Material You unless you pick something else (one-time switch of the old default)
+        if (!p.getBoolean("feed_you_set", false)) {
+            p.edit().putBoolean("feed_you_set", true).putString("feed_bg", dynamicColor(c) ? "you" : p.getString("feed_bg", "dark")).commit();
+        }
+        return p.getString("feed_bg", "you");
+    }
     public static int feedColor(Context c) {
         if ("you".equals(feedBg(c))) { // follow the wallpaper colours (Material You)
             try { return c.getColor(Ui.night(c) ? android.R.color.system_accent2_900 : android.R.color.system_accent2_100); } catch (Throwable ignored) { }

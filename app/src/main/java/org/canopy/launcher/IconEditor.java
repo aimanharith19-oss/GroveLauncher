@@ -264,6 +264,14 @@ public final class IconEditor {
         Ui.tintField(L, search);
         search.setHint("Search " + all.size() + " icons");
         Ui.styleField(L, search, pal);
+        // not focused when the dialog opens: no keyboard popping up and moving the grid, so the first icon is where it looks like it is
+        search.setFocusableInTouchMode(false);
+        search.setOnTouchListener(new View.OnTouchListener() {
+            @Override public boolean onTouch(View v, android.view.MotionEvent e) {
+                if (e.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) v.setFocusableInTouchMode(true);
+                return false;
+            }
+        });
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-1, Ui.dp(L, 44));
         slp.setMargins(Ui.dp(L, 16), Ui.dp(L, 8), Ui.dp(L, 16), Ui.dp(L, 8));
         box.addView(search, slp);
@@ -273,7 +281,7 @@ public final class IconEditor {
         // centred: the spare width is shared evenly at both edges and between the columns
         grid.setStretchMode(GridView.STRETCH_SPACING_UNIFORM);
         grid.setGravity(Gravity.CENTER);
-        grid.setPadding(Ui.dp(L, 12), 0, Ui.dp(L, 12), Ui.dp(L, 8));
+        grid.setPadding(Ui.dp(L, 12), Ui.dp(L, 6), Ui.dp(L, 12), Ui.dp(L, 8));
         grid.setClipToPadding(false);
         grid.setVerticalSpacing(Ui.dp(L, 4));
         grid.setSelector(new ColorDrawable(0));

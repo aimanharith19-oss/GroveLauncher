@@ -181,16 +181,24 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         super.onStart();
         stopped = false;
         iconsDark = null; // reapplied below: the system may have reset it while another app was on top
-        try { applyStatusBar(); } catch (Throwable ignored) { }
+        // (the status bar is set once, in onResume)
         // The slow parts of coming back (every widget's update, every web tab) run just after the first frame,
         // so the home screen appears at once when you leave an app.
-        root.post(new Runnable() {
+        // …and in two steps, ~1 s later: the widgets' updates (every one inflates views on the main thread) and the web tabs
+        // used to land exactly when you swiped up to the drawer, which was the stutter after leaving an app.
+        root.postDelayed(new Runnable() {
             @Override public void run() {
                 if (stopped) return;
+                if (overlayAnimating) { root.postDelayed(this, 400); return; } // wait for a drawer / folder slide to finish
                 try { widgetHost.startListening(); } catch (Throwable ignored) { }
-                try { wakeWeb(); webForFeed = true; syncWebToFeed(); } catch (Throwable ignored) { }
+                root.postDelayed(new Runnable() {
+                    @Override public void run() {
+                        if (stopped) return;
+                        try { wakeWeb(); webForFeed = true; syncWebToFeed(); } catch (Throwable ignored) { }
+                    }
+                }, 500);
             }
-        });
+        }, 1000);
     }
 
     // ------------------------------------------------------------------ battery: freezing web tabs while away
@@ -420,7 +428,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                 @Override public void run() {
                     try { if (feed != null && resumed && workspace.getCurrentPage() != 0) feed.refresh(); } catch (Throwable ignored) { }
                 }
-            }, 800); // after the return animation, not during it
+            }, 2500); // well after the return animation, not during it
         }
         if (returningHome) {
             returningHome = false;

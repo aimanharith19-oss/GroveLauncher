@@ -76,6 +76,7 @@ public class DrawerView extends FrameLayout {
     private final LinearLayout tabBar, frequent, selectBar;
     private final TextView selectCount;
     private final HorizontalScrollView tabScroll;
+    private int keepScroll = -1; // where the strip was before it was rebuilt (a rebuild would jump it to the start)
     private View revealTab; // the selected tab: shown in full once the strip has been laid out
     private final Ui.Palette pal;
     private final int slop;
@@ -161,7 +162,9 @@ public class DrawerView extends FrameLayout {
                 final View cur = revealTab;
                 if (cur == null || cur.getParent() != tabBar || tabScroll.getWidth() == 0 || cur.getWidth() == 0) return;
                 revealTab = null;
-                int vw = tabScroll.getWidth(), sx = tabScroll.getScrollX();
+                int vw = tabScroll.getWidth();
+                if (keepScroll >= 0) { tabScroll.scrollTo(Math.min(keepScroll, Math.max(0, tabBar.getWidth() - vw)), 0); keepScroll = -1; }
+                int sx = tabScroll.getScrollX();
                 if (cur.getLeft() - Ui.dp(getContext(), 3) >= sx && cur.getRight() + Ui.dp(getContext(), 3) <= sx + vw) return; // already fully in view
                 int max = Math.max(0, tabBar.getWidth() - vw);
                 tabScroll.scrollTo(Math.max(0, Math.min(max, cur.getLeft() - (vw - cur.getWidth()) / 2)), 0);
@@ -669,6 +672,7 @@ public class DrawerView extends FrameLayout {
     }
 
     private void buildTabs(List<DrawerGroups.Group> tabs, boolean work) {
+        if (tabScroll.getWidth() > 0 && tabBar.getChildCount() > 0) keepScroll = tabScroll.getScrollX();
         tabBar.removeAllViews();
         boolean show = !tabs.isEmpty() || work;
         tabScroll.setVisibility(show ? VISIBLE : GONE);
@@ -682,11 +686,14 @@ public class DrawerView extends FrameLayout {
         Context c = getContext();
         boolean on = key.equals(tab);
         // Natural, easy-to-hit tabs: the current one is a soft accent pill with bold text, the others plain text.
-        TextView t = Ui.text(c, name, 15, on ? pal.accent : pal.subtext);
-        t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", on ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL));
+        boolean small = Ui.smallPhone(c);
+        TextView t = Ui.text(c, name, small ? 14 : 15, on ? pal.accent : pal.subtext);
+        // the same weight for every tab (the pill and colour mark the current one), so choosing a tab never changes the widths and the strip doesn't shift
+        t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+        t.setSingleLine(true);
         t.setGravity(Gravity.CENTER);
-        t.setMinWidth(Ui.dp(c, 64));
-        t.setPadding(Ui.dp(c, 18), Ui.dp(c, 9), Ui.dp(c, 18), Ui.dp(c, 9));
+        t.setMinWidth(Ui.dp(c, small ? 52 : 64));
+        t.setPadding(Ui.dp(c, small ? 14 : 18), Ui.dp(c, 9), Ui.dp(c, small ? 14 : 18), Ui.dp(c, 9));
         t.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.accent, 0x2E) : 0x00000000, Ui.dp(c, 20)));
         t.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) { tab = key; refresh(); revealList(); }
@@ -1204,7 +1211,7 @@ public class DrawerView extends FrameLayout {
             setTranslationY(Anim.fluid(c) ? h * 0.35f : h);
             setAlpha(Anim.fluid(c) ? 0f : 0.6f);
             animate().translationY(0).alpha(1f).setDuration(Anim.dur(c, Anim.fluid(c) ? 520 : 260))
-                    .setInterpolator(Anim.open(c)).start();
+                    .setInterpolator(Anim.open(c)).withLayer().start();
         }
         scroll.scrollTo(0, 0);
         // rebuilding the grid waits for the slide to finish, so the swipe itself stays smooth

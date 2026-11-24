@@ -28,6 +28,12 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.55.2
+- **Feed follows Material You** by default (Feed > Background > Material You); phones that still had the old dark default are switched once, and you can pick another background any time.
+- **Icon pack picker**: the first icon can be chosen (the search box no longer grabs focus and opens the keyboard when the picker opens).
+- **Drawer tabs on small phones**: all tabs use the same text weight, are a little tighter, and the strip keeps its place when you pick another tab.
+- **Smoother launcher after leaving an app**: widget updates, web tabs and the feed refresh now start about a second after you return (and wait for a drawer slide to finish), the status bar is set once, and the drawer slides on a hardware layer.
+
 ### What's new in 1.55.1
 - **Crash on start fixed** (Integer cannot be cast to Long): a restored backup wrote some saved times as plain numbers. Backups now keep each value's type, and the launcher repairs such values on its own, so an already-affected phone starts again without clearing data.
 
