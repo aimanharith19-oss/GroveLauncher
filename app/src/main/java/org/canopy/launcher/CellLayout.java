@@ -28,6 +28,8 @@ public class CellLayout extends ViewGroup {
         public int x, y, sx, sy;
         /** Free placement in cell units (NaN = use the cell position above). */
         public float fx = Float.NaN, fy, fw, fh;
+        /** Reach the screen edge on the side(s) where it touches the first / last column. */
+        public boolean edge;
         public boolean free() { return !Float.isNaN(fx); }
         public LP(int x, int y, int sx, int sy) {
             super(MATCH_PARENT, MATCH_PARENT);
@@ -54,6 +56,10 @@ public class CellLayout extends ViewGroup {
     public int cellWidth() { return cellW; }
     public int cellHeight() { return cellH; }
 
+    /** Distance from this page's grid to the screen's left / right edge (its own and the home screen's side padding). */
+    private int edgeL() { View p = (View) getParent(); return getPaddingLeft() + (p != null ? p.getPaddingLeft() : 0); }
+    private int edgeR() { View p = (View) getParent(); return getPaddingRight() + (p != null ? p.getPaddingRight() : 0); }
+
     @Override protected void onMeasure(int wSpec, int hSpec) {
         int w = MeasureSpec.getSize(wSpec), h = MeasureSpec.getSize(hSpec);
         cellW = Math.max(1, (w - getPaddingLeft() - getPaddingRight()) / cols);
@@ -62,6 +68,7 @@ public class CellLayout extends ViewGroup {
             View v = getChildAt(i);
             LP lp = (LP) v.getLayoutParams();
             int mw = lp.free() ? Math.max(1, Math.round(lp.fw * cellW)) : lp.sx * cellW;
+            if (lp.edge && !lp.free()) mw += (lp.x == 0 ? edgeL() : 0) + (lp.x + lp.sx >= cols ? edgeR() : 0);
             int mh = lp.free() ? Math.max(1, Math.round(lp.fh * cellH)) : lp.sy * cellH;
             v.measure(MeasureSpec.makeMeasureSpec(mw, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(mh, MeasureSpec.EXACTLY));
         }
@@ -78,6 +85,11 @@ public class CellLayout extends ViewGroup {
                 continue;
             }
             int left = getPaddingLeft() + lp.x * cellW, top = getPaddingTop() + lp.y * cellH;
+            if (lp.edge) {
+                int l2 = lp.x == 0 ? left - edgeL() : left;
+                v.layout(l2, top, l2 + v.getMeasuredWidth(), top + lp.sy * cellH);
+                continue;
+            }
             v.layout(left, top, left + lp.sx * cellW, top + lp.sy * cellH);
         }
     }

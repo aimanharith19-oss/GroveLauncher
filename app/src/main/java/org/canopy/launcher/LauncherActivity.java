@@ -799,6 +799,10 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             if (target == null) continue;
             if (it.container == HomeItem.DOCK && (it.x >= target.cols || it.y > 1)) continue;
             target.addItem(v, it.x, it.y, Math.min(it.spanX, target.cols), Math.min(it.spanY, target.rows));
+            if (it.edge && it.container == HomeItem.DESKTOP && it.type == HomeItem.WIDGET) {
+                ((CellLayout.LP) v.getLayoutParams()).edge = true;
+                v.setPadding(0, 0, 0, 0);
+            }
             if (it.isFree() && it.container == HomeItem.DESKTOP) {
                 CellLayout.LP lp = (CellLayout.LP) v.getLayoutParams();
                 lp.fx = it.fx; lp.fy = it.fy; lp.fw = it.fw; lp.fh = it.fh;
@@ -2192,6 +2196,17 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         entries.add(new MenuEntry(R.drawable.ic_crop, "Crop", new Runnable() {
             @Override public void run() { cropWidget(item, v); }
         }));
+        if (item.container == HomeItem.DESKTOP && !item.isFree()) {
+            entries.add(new MenuEntry(R.drawable.ic_resize, item.edge ? "Back inside the margins" : "Stretch to screen edge", new Runnable() {
+                @Override public void run() {
+                    item.edge = !item.edge;
+                    store.commit();
+                    bindAll();
+                    if (item.edge && item.x != 0 && item.x + item.spanX < Prefs.gridCols(LauncherActivity.this))
+                        Ui.toast(LauncherActivity.this, "It reaches the edge once it touches the left or right side \u2014 resize or move it there");
+                }
+            }));
+        }
         if (item.container == HomeItem.DESKTOP) {
             entries.add(new MenuEntry(R.drawable.ic_layers, item.clickThrough ? "Turn off click-through" : "Click-through (touches pass to what's behind)", new Runnable() {
                 @Override public void run() {

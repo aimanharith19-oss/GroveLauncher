@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.57.0
+- **Widgets to the screen edge**: long-press a widget > *Stretch to screen edge*. Where it touches the left or right column it now reaches all the way to the edge of the screen (no side margin, no widget padding). *Back inside the margins* undoes it.
+
 ### What's new in 1.56.1
 - **The stutter, found and fixed (thanks to the lag report)**: a notification that changes every second (a countdown, stopwatch or download) was saved as a new history entry each second, and each one rebuilt the feed's notification list — 200 rows, icons included — taking 250–1000 ms on the main thread, every second. Now such updates replace the entry in place, the list is only rebuilt when something new arrives and the feed is on screen, it shows the latest 30, and app icons are loaded once.
 

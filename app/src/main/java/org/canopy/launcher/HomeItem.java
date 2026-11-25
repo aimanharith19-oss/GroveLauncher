@@ -28,6 +28,8 @@ public class HomeItem {
     public float fx = Float.NaN, fy = Float.NaN, fw = Float.NaN, fh = Float.NaN;
     /** WIDGET that lets touches pass through to whatever is behind it (icons, KLWP…). */
     public boolean clickThrough;
+    /** Widget stretches out to the screen edge when it touches the left / right column. */
+    public boolean edge;
     /** WIDGET crop: share hidden on the left, top, right and bottom (0..0.8). */
     public float cropL, cropT, cropR, cropB;
     public boolean isFree() { return !Float.isNaN(fx) && !Float.isNaN(fw); }
@@ -57,6 +59,7 @@ public class HomeItem {
         if (shortcutId != null) o.put("sid", shortcutId);
         if (swipe != null) o.put("swipe", swipe);
         if (clickThrough) o.put("ct", true);
+        if (edge) o.put("edge", true);
         if (cropL > 0 || cropT > 0 || cropR > 0 || cropB > 0) o.put("crop", new JSONArray().put(cropL).put(cropT).put(cropR).put(cropB));
         if (isFree()) o.put("fx", fx).put("fy", fy).put("fw", fw).put("fh", fh);
         if (!children.isEmpty()) {
@@ -85,6 +88,7 @@ public class HomeItem {
         it.shortcutId = o.optString("sid", null);
         it.swipe = o.optString("swipe", null);
         it.clickThrough = o.optBoolean("ct", false);
+        it.edge = o.optBoolean("edge", false);
         JSONArray cr = o.optJSONArray("crop");
         if (cr != null && cr.length() == 4) { it.cropL = (float) cr.optDouble(0); it.cropT = (float) cr.optDouble(1); it.cropR = (float) cr.optDouble(2); it.cropB = (float) cr.optDouble(3); }
         if (o.has("fx")) {
