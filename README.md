@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.57.1
+- *Stretch to screen edge* is now second in the widget's long-press menu (under Resize) and also works for freely placed widgets.
+
 ### What's new in 1.57.0
 - **Widgets to the screen edge**: long-press a widget > *Stretch to screen edge*. Where it touches the left or right column it now reaches all the way to the edge of the screen (no side margin, no widget padding). *Back inside the margins* undoes it.
 

@@ -68,6 +68,7 @@ public class CellLayout extends ViewGroup {
             View v = getChildAt(i);
             LP lp = (LP) v.getLayoutParams();
             int mw = lp.free() ? Math.max(1, Math.round(lp.fw * cellW)) : lp.sx * cellW;
+            if (lp.edge && lp.free()) mw += (lp.fx < 0.05f ? edgeL() : 0) + (lp.fx + lp.fw > cols - 0.05f ? edgeR() : 0);
             if (lp.edge && !lp.free()) mw += (lp.x == 0 ? edgeL() : 0) + (lp.x + lp.sx >= cols ? edgeR() : 0);
             int mh = lp.free() ? Math.max(1, Math.round(lp.fh * cellH)) : lp.sy * cellH;
             v.measure(MeasureSpec.makeMeasureSpec(mw, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(mh, MeasureSpec.EXACTLY));
@@ -81,6 +82,7 @@ public class CellLayout extends ViewGroup {
             LP lp = (LP) v.getLayoutParams();
             if (lp.free()) {
                 int left = getPaddingLeft() + Math.round(lp.fx * cellW), top = getPaddingTop() + Math.round(lp.fy * cellH);
+                if (lp.edge && lp.fx < 0.05f) left -= edgeL();
                 v.layout(left, top, left + v.getMeasuredWidth(), top + v.getMeasuredHeight());
                 continue;
             }
