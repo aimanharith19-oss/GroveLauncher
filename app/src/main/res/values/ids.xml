@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="notif_dirty" type="id"/>
+    <item name="notif_sig" type="id"/>
+</resources>

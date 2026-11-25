@@ -150,11 +150,28 @@ public final class NotifHistory {
             return;
         }
         lastByKey.put(e.key, sig);
+        // A notification that keeps changing (countdown, stopwatch, download %) was added as a new entry every
+        // second, and each one rebuilt the feed's list (~250 ms on the main thread): the launcher's stutter.
+        // Now an update within 2 minutes of the last one replaces it in place and refreshes the feed at most every 15 s.
+        for (int i = entries.size() - 1; i >= 0 && i >= entries.size() - 50; i--) {
+            Entry o = entries.get(i);
+            if (o.key.equals(e.key)) {
+                if (e.when - o.when < 120_000L) {
+                    entries.set(i, e);
+                    save();
+                    long now = android.os.SystemClock.uptimeMillis();
+                    if (now - lastQuietNotify > 15_000L) { lastQuietNotify = now; notifyListeners(); }
+                    return;
+                }
+                break;
+            }
+        }
         entries.add(e);
         prune();
         save();
         notifyListeners();
     }
+    private static long lastQuietNotify;
 
     /** The feed keeps 3 days; anything older (or past the size cap) moves to the spreadsheet archive. */
     private static void prune() {

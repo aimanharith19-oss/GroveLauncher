@@ -1706,13 +1706,46 @@ public class FeedPage extends LinearLayout {
         NotifHistory.ensureLoaded(c);
         final LinearLayout col = new LinearLayout(c);
         col.setOrientation(VERTICAL);
-        final NotifHistory.Listener l = new NotifHistory.Listener() { @Override public void onHistoryChanged() { fillNotifs(col); } };
+        // rebuilt only while the feed is on screen (otherwise when it next comes into view), and only if the list changed
+        final NotifHistory.Listener l = new NotifHistory.Listener() { @Override public void onHistoryChanged() { refillNotifs(col); } };
+        col.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override public void onGlobalLayout() { if (Boolean.TRUE.equals(col.getTag(R.id.notif_dirty)) && notifsVisible(col)) refillNotifs(col); }
+        });
         col.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
             @Override public void onViewAttachedToWindow(View v) { NotifHistory.addListener(l); fillNotifs(col); }
             @Override public void onViewDetachedFromWindow(View v) { NotifHistory.removeListener(l); }
         });
         fillNotifs(col);
         return col;
+    }
+
+    private final android.graphics.Rect visRect = new android.graphics.Rect();
+    private boolean notifsVisible(View v) { return v.isShown() && v.getGlobalVisibleRect(visRect); }
+
+    private void refillNotifs(LinearLayout col) {
+        if (!notifsVisible(col)) { col.setTag(R.id.notif_dirty, Boolean.TRUE); return; }
+        col.setTag(R.id.notif_dirty, null);
+        List<NotifHistory.Entry> top = NotifHistory.recent(null, 1);
+        String sig = NotifHistory.size() + ":" + (top.isEmpty() ? "" : top.get(0).when + top.get(0).key);
+        if (sig.equals(col.getTag(R.id.notif_sig))) return; // nothing new
+        col.setTag(R.id.notif_sig, sig);
+        fillNotifs(col);
+    }
+
+    /** App icons for the list, loaded once per app (on some phones each load costs ~10 ms). */
+    private static final java.util.HashMap<String, android.graphics.drawable.Drawable.ConstantState> ICONS = new java.util.HashMap<>();
+    private static android.graphics.drawable.Drawable appIcon(Context c, String pkg) {
+        android.graphics.drawable.Drawable.ConstantState cs = ICONS.get(pkg);
+        if (cs == null) {
+            try {
+                android.graphics.drawable.Drawable d = c.getPackageManager().getApplicationIcon(pkg);
+                cs = d.getConstantState();
+                if (cs == null) return d;
+                if (ICONS.size() > 80) ICONS.clear();
+                ICONS.put(pkg, cs);
+            } catch (Exception e) { return null; }
+        }
+        return cs.newDrawable(c.getResources());
     }
 
     /** Compact: one icon per app (newest first) with how many it sent; tap to read them in full. */
@@ -1740,7 +1773,7 @@ public class FeedPage extends LinearLayout {
             return;
         }
         // newest first, the app's icon beside each one; five rows show at a time and the list scrolls
-        final List<NotifHistory.Entry> list = NotifHistory.recent(null, 200);
+        final List<NotifHistory.Entry> list = NotifHistory.recent(null, 30); // the card shows five at a time; tap an icon for all of that app's
         final int rowH = Ui.dp(c, 60);
         ScrollView sv = new ScrollView(c) {
             @Override public boolean onTouchEvent(MotionEvent ev) {
@@ -1758,13 +1791,14 @@ public class FeedPage extends LinearLayout {
         box.setOrientation(VERTICAL);
         sv.addView(box);
         java.text.DateFormat tf = android.text.format.DateFormat.getTimeFormat(c);
+        final String today = dayLabel(System.currentTimeMillis());
         for (final NotifHistory.Entry e : list) {
             LinearLayout r = new LinearLayout(c);
             r.setGravity(Gravity.CENTER_VERTICAL);
             r.setPadding(Ui.dp(c, 6), 0, Ui.dp(c, 6), 0);
             r.setBackground(Ui.pressable(c, 0x00000000, Ui.dp(c, 12)));
             ImageView ic = new ImageView(c);
-            try { ic.setImageDrawable(c.getPackageManager().getApplicationIcon(e.pkg)); } catch (Exception ignored) { }
+            ic.setImageDrawable(appIcon(c, e.pkg));
             ic.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { showNotifs(e.pkg); } });
             r.addView(ic, new LinearLayout.LayoutParams(Ui.dp(c, 36), Ui.dp(c, 36)));
             LinearLayout tx = new LinearLayout(c);
@@ -1782,7 +1816,8 @@ public class FeedPage extends LinearLayout {
                 tx.addView(b);
             }
             r.addView(tx, new LinearLayout.LayoutParams(0, -2, 1));
-            r.addView(Ui.text(c, dayLabel(e.when).equals(dayLabel(System.currentTimeMillis())) ? tf.format(new java.util.Date(e.when)) : dayLabel(e.when), 11, pal.subtext));
+            String dl = dayLabel(e.when);
+            r.addView(Ui.text(c, dl.equals(today) ? tf.format(new java.util.Date(e.when)) : dl, 11, pal.subtext));
             r.setOnClickListener(new OnClickListener() {
                 @Override public void onClick(View v) {
                     if (e.open != null) {
