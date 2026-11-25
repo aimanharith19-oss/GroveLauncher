@@ -28,6 +28,10 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.56.0
+- **Lag report**: Settings > *Record lag* times every job on the launcher's main thread; any that takes 50 ms or more (a visible stutter) is kept with what was running and where it was stuck. *Share lag report* sends the list, so a stutter can be fixed exactly instead of guessed.
+- **Smoother swipe to the feed**: the home page is no longer re-blurred on every frame while the feed slides in; the blur is applied once it's fully open.
+
 ### What's new in 1.55.8
 - **Feed cards use exactly the app drawer's colour** (same Material You tone as the drawer background).
 

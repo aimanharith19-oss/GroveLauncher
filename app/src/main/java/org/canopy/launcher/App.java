@@ -31,7 +31,7 @@ public class App extends Application {
     // a strong reference: SharedPreferences only holds its listeners weakly
     private final android.content.SharedPreferences.OnSharedPreferenceChangeListener prefListener =
             new android.content.SharedPreferences.OnSharedPreferenceChangeListener() {
-                @Override public void onSharedPreferenceChanged(android.content.SharedPreferences sp, String key) { Ui.clearPaletteCache(); }
+                @Override public void onSharedPreferenceChanged(android.content.SharedPreferences sp, String key) { Ui.clearPaletteCache(); if ("lag_record".equals(key)) LagMonitor.sync(App.this); }
             };
 
     @Override public void onCreate() {
@@ -41,6 +41,7 @@ public class App extends Application {
         CrashLog.install(this);
         Prefs.sp(this).registerOnSharedPreferenceChangeListener(prefListener);
         KeepAliveService.sync(this);
+        LagMonitor.sync(this);
         // once a week, empty the launcher's cache (a little after start-up, so it never slows opening)
         MAIN.postDelayed(new Runnable() { @Override public void run() { weeklyCacheClear(App.this); } }, 30000);
         registerReceiver(new android.content.BroadcastReceiver() {

@@ -228,7 +228,7 @@ public class Workspace extends ViewGroup {
                 v.setScaleY(sc);
                 v.setAlpha(1f - 0.8f * f);
                 if (android.os.Build.VERSION.SDK_INT >= 31 && Prefs.sp(getContext()).getBoolean("depth_blur", true)) {
-                    int br = Math.round(f * dens * 20);
+                    int br = f >= 0.999f ? Math.round(dens * 20) : 0; // blur only once settled: re-blurring a whole page every frame was a stutter
                     if (Math.abs(br - lastHomeBlur) >= 2 || (br == 0 && lastHomeBlur != 0)) {
                         lastHomeBlur = br;
                         v.setRenderEffect(br > 0 ? android.graphics.RenderEffect.createBlurEffect(br, br,

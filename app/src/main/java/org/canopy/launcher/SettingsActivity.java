@@ -349,6 +349,18 @@ public class SettingsActivity extends Activity {
     }
 
     private void addCrashRows() {
+        header("Lag report");
+        toggle("Record lag", "lag_record", false);
+        action("Share lag report", "Turn on Record lag, use the launcher until it stutters, then send this", new Runnable() {
+            @Override public void run() {
+                LagMonitor.sync(SettingsActivity.this);
+                Intent i = new Intent(Intent.ACTION_SEND).setType("text/plain")
+                        .putExtra(Intent.EXTRA_SUBJECT, "Grove Launcher lag report")
+                        .putExtra(Intent.EXTRA_TEXT, LagMonitor.report(SettingsActivity.this));
+                startActivity(Intent.createChooser(i, "Share lag report"));
+            }
+        });
+
         String crash = CrashLog.read(this);
         if (crash != null) {
             header("Last crash report");
