@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.59.0
+- **YouTube-style tabs** in the app drawer and the feed: the highlighted pill slides (and stretches) from one tab to the next instead of jumping, and the page slides in from that side. In the drawer, swiping left / right now drags the list with your finger, with the next tab sliding in beside it, and the pill follows the swipe.
+
 ### What's new in 1.58.1
 - **Drawer (and feed, menus) follow a new wallpaper's Material You colours**: the launcher kept its colours cached, so after changing wallpaper the drawer stayed in the old colours until a restart. It now notices the system's new palette and rebuilds with it.
 

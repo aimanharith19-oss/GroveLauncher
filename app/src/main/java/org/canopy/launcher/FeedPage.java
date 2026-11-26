@@ -402,18 +402,21 @@ public class FeedPage extends LinearLayout {
     public void buildTabs() {
         Context c = getContext();
         tabBar.removeAllViews();
-        tabBar.addView(tabChip("feed", FeedWeb.prefs(c).getString("feed_tab_name", "Feed"), null, R.drawable.ic_feed));
+        View fc = tabChip("feed", FeedWeb.prefs(c).getString("feed_tab_name", "Feed"), null, R.drawable.ic_feed);
+        fc.setTag(R.id.tab_id, "feed");
+        tabBar.addView(fc);
         List<String> tabs = FeedWeb.tabs(c);
         java.util.Set<String> shownGroups = new java.util.HashSet<>();
         for (String id : tabs) {
             String g = FeedWeb.groupOf(c, id);
             if (g != null) {
                 // Chrome-style group: its tabs shown as icons side by side in one pill
-                if (shownGroups.add(g)) tabBar.addView(groupChip(g, FeedWeb.groupMembers(c, g)));
+                if (shownGroups.add(g)) { View gc = groupChip(g, FeedWeb.groupMembers(c, g)); gc.setTag(R.id.tab_id, FeedWeb.groupMembers(c, g)); tabBar.addView(gc); }
                 continue;
             }
-            if (FeedWeb.isAppTab(id)) { tabBar.addView(appChip(id)); continue; }
-            tabBar.addView(tabChip(id, FeedWeb.title(c, id), stableIcon(c, id), 0));
+            View tc = FeedWeb.isAppTab(id) ? appChip(id) : tabChip(id, FeedWeb.title(c, id), stableIcon(c, id), 0);
+            tc.setTag(R.id.tab_id, id);
+            tabBar.addView(tc);
         }
         ImageView plus = Ui.iconButton(c, R.drawable.ic_add, 0xFFFFFFFF, new OnClickListener() {
             @Override public void onClick(View v) { newWebTab(); }
@@ -646,8 +649,21 @@ public class FeedPage extends LinearLayout {
         };
     }
 
+    private View chipFor(String id) {
+        for (int i = 0; i < tabBar.getChildCount(); i++) {
+            View v = tabBar.getChildAt(i);
+            Object t = v.getTag(R.id.tab_id);
+            if (id.equals(t) || (t instanceof List && ((List<?>) t).contains(id))) return v;
+        }
+        return null;
+    }
+
+    private int tabOrder(String id) { return "feed".equals(id) ? -1 : FeedWeb.tabs(getContext()).indexOf(id); }
+
     /** Switch tab: the feed cards, or one website filling the page. */
     public void showTab(String id) {
+        final String before = current;
+        final android.graphics.Rect fromRect = TabPill.rectOf(before != null ? chipFor(before) : null);
         Context c = getContext();
         // app tabs open the real app (in a floating window where the phone allows it) — unless you chose
         // "Open its website in the feed" for that tab
@@ -657,17 +673,32 @@ public class FeedPage extends LinearLayout {
         current = id;
         FeedWeb.prefs(c).edit().putString("current", id).apply();
         buildTabs();
+        // YouTube-style: the selected pill slides to the new tab and the page slides in from that side
+        final String now = id;
+        if (fromRect != null && !now.equals(before)) tabBar.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                tabBar.getViewTreeObserver().removeOnPreDrawListener(this);
+                TabPill.slide(tabBar, fromRect, chipFor(now), 260);
+                return true;
+            }
+        });
+        int dir = before == null || now.equals(before) ? 0 : (tabOrder(now) > tabOrder(before) ? 1 : -1);
+        View in;
         if ("feed".equals(id)) {
             webPane.removeAllViews();
             webPane.setVisibility(GONE);
             cardsScroll.setVisibility(VISIBLE);
+            in = cardsScroll;
         } else {
             buildWebPane(id);
             cardsScroll.setVisibility(GONE);
             webPane.setVisibility(VISIBLE);
-            webPane.setAlpha(0f);
-            webPane.animate().alpha(1f).setDuration(Anim.dur(c, 160)).start();
+            in = webPane;
         }
+        float w = Math.max(1, getWidth());
+        in.setTranslationX(dir * w * 0.35f);
+        in.setAlpha(0f);
+        in.animate().translationX(0).alpha(1f).setDuration(Anim.dur(c, 260)).setInterpolator(Anim.open(c)).start();
         // keep the selected tab in view
         final View sel = tabBar.getChildAt(Math.max(0, "feed".equals(id) ? 0 : FeedWeb.tabs(c).indexOf(id) + 1));
         if (sel != null) post(new Runnable() { @Override public void run() { tabScroll.smoothScrollTo(Math.max(0, sel.getLeft() - Ui.dp(getContext(), 40)), 0); } });

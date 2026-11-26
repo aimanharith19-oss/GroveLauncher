@@ -76,6 +76,15 @@ public class DrawerView extends FrameLayout {
     private final LinearLayout tabBar, frequent, selectBar;
     private final TextView selectCount;
     private final HorizontalScrollView tabScroll;
+    // ---- YouTube-style tab paging: the list follows the finger, the next tab slides in beside it, the pill slides along
+    private ImageView peek;                       // a picture of the neighbouring tab, slid in beside the list
+    private final java.util.LinkedHashMap<String, android.graphics.Bitmap> snaps = new java.util.LinkedHashMap<>();
+    private android.graphics.drawable.GradientDrawable dragPill;
+    private View dragFromChip;
+    private android.graphics.drawable.Drawable dragFromBg;
+    private int swipeDir;                         // +1 = towards the next tab, -1 = previous
+    private final android.graphics.Rect pillTmp = new android.graphics.Rect();
+    private android.graphics.Rect pendingPillFrom;
     private int keepScroll = -1; // where the strip was before it was rebuilt (a rebuild would jump it to the start)
     private View revealTab; // the selected tab: shown in full once the strip has been laid out
     private final Ui.Palette pal;
@@ -262,6 +271,10 @@ public class DrawerView extends FrameLayout {
         box.addView(wave, new LayoutParams(-1, -1));
         scroll.setVerticalScrollBarEnabled(false);
         stack.addView(box, new LayoutParams(-1, -1));
+        peek = new ImageView(c);
+        peek.setScaleType(ImageView.ScaleType.FIT_XY);
+        peek.setVisibility(GONE);
+        stack.addView(peek, new LayoutParams(-1, -1));
         stack.addView(acrylic, new LayoutParams(-1, -2, Gravity.TOP));
         acrylic.setSource(box);
         // Lists start below the floating bar, then scroll underneath it.
@@ -680,6 +693,20 @@ public class DrawerView extends FrameLayout {
         addChip(tabName("all", "All"), "all", null);
         if (work) { addChip(tabName("personal", "Personal"), "personal", null); addChip(tabName("work", "Work"), "work", null); }
         for (DrawerGroups.Group g : tabs) addChip(g.name, "t" + g.id, g);
+        final android.graphics.Rect from = pendingPillFrom;
+        pendingPillFrom = null;
+        if (from != null) tabBar.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                tabBar.getViewTreeObserver().removeOnPreDrawListener(this);
+                TabPill.slide(tabBar, from, chipFor(tab), 260);
+                return true;
+            }
+        });
+    }
+
+    private View chipFor(String key) {
+        int i = tabKeys().indexOf(key);
+        return i >= 0 && i < tabBar.getChildCount() ? tabBar.getChildAt(i) : null;
     }
 
     private void addChip(String name, final String key, final DrawerGroups.Group g) {
@@ -696,7 +723,13 @@ public class DrawerView extends FrameLayout {
         t.setPadding(Ui.dp(c, small ? 14 : 18), Ui.dp(c, 9), Ui.dp(c, small ? 14 : 18), Ui.dp(c, 9));
         t.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.accent, 0x2E) : 0x00000000, Ui.dp(c, 20)));
         t.setOnClickListener(new OnClickListener() {
-            @Override public void onClick(View v) { tab = key; refresh(); revealList(); }
+            @Override public void onClick(View v) {
+                if (key.equals(tab)) return;
+                List<String> keys = tabKeys();
+                int from = keys.indexOf(tab), to = keys.indexOf(key);
+                if (from < 0 || to < 0) { tab = key; refresh(); revealList(); return; }
+                goToTab(key, to > from ? 1 : -1, 0f);
+            }
         });
         // Hold any tab (All / Personal / Work too) to rename it.
         if (!locked()) t.setOnLongClickListener(new OnLongClickListener() {
@@ -1217,6 +1250,7 @@ public class DrawerView extends FrameLayout {
         // rebuilding the grid waits for the slide to finish, so the swipe itself stays smooth
         if (Prefs.drawerRows(c) > 0) postDelayed(new Runnable() { @Override public void run() { if (open) refresh(); } }, Anim.dur(c, Anim.fluid(c) ? 540 : 280));
         revealList();
+        snapLater();
         if (focusSearch || Prefs.sp(c).getBoolean("drawer_keyboard", false)) expandSearch(true);
     }
 
@@ -1327,25 +1361,130 @@ public class DrawerView extends FrameLayout {
     private void switchTab(final int dir) {
         List<String> keys = tabKeys();
         int i = keys.indexOf(tab);
-        final int next = i + dir;
+        int next = i + dir;
+        if (i < 0 || next < 0 || next >= keys.size()) { settleBack(); return; }
+        goToTab(keys.get(next), dir, Math.abs(box.getTranslationX()) / Math.max(1f, box.getWidth()));
+    }
+
+    /** Slide to another tab: the list moves out, the next one (its picture, then the real list) moves in, the pill follows. */
+    private void goToTab(final String key, final int dir, float done) {
         final float w = Math.max(1, box.getWidth());
-        if (i < 0 || next < 0 || next >= keys.size()) {
-            box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 260)).setInterpolator(Anim.gentle(getContext())).start();
-            return;
-        }
-        final String key = keys.get(next);
         if (Anim.haptics(getContext())) performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
-        box.animate().translationX(-dir * w * 0.35f).alpha(0f).setDuration(Anim.dur(getContext(), 120))
-                .setInterpolator(Anim.close(getContext())).withEndAction(new Runnable() {
+        final View fromChip = chipFor(tab);
+        final View toChip = chipFor(key);
+        final android.graphics.Rect fromRect = dragPill != null ? new android.graphics.Rect(dragPill.getBounds()) : TabPill.rectOf(fromChip);
+        clearDragPill(false);
+        if (toChip != null && fromRect != null) {
+            // the pill slides now, on the old strip; the strip is rebuilt when the content lands
+            TabPill.slide(tabBar, fromRect, toChip, 240);
+            if (fromChip != null && fromChip != toChip) fromChip.setBackground(null); // the strip is rebuilt when the list lands
+            ((TextView) toChip).setTextColor(pal.accent);
+            if (fromChip instanceof TextView && fromChip != toChip) ((TextView) fromChip).setTextColor(pal.subtext);
+        }
+        android.graphics.Bitmap pic = snaps.get(key);
+        long ms = Anim.dur(getContext(), Math.max(120, Math.round(260 * (1f - Math.min(0.9f, done)))));
+        if (pic != null) {
+            peek.setImageBitmap(pic);
+            peek.setVisibility(VISIBLE);
+            peek.setTranslationX(box.getTranslationX() + dir * w);
+            peek.animate().translationX(0).setDuration(ms).setInterpolator(Anim.open(getContext())).start();
+        }
+        box.animate().translationX(-dir * w).alpha(pic != null ? 1f : 0f).setDuration(ms).setInterpolator(Anim.open(getContext()))
+                .withEndAction(new Runnable() {
                     @Override public void run() {
                         tab = key;
                         refresh();
                         scroll.scrollTo(0, 0);
-                        box.setTranslationX(dir * w * 0.35f);
-                        box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 260))
-                                .setInterpolator(Anim.open(getContext())).start();
+                        box.setTranslationX(0);
+                        box.setAlpha(1f);
+                        if (peek.getVisibility() == VISIBLE) {
+                            peek.setVisibility(GONE);
+                            peek.setImageBitmap(null);
+                        } else {
+                            box.setTranslationX(dir * w * 0.3f);
+                            box.setAlpha(0f);
+                            box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 220)).setInterpolator(Anim.open(getContext())).start();
+                        }
+                        acrylic.invalidate();
+                        snapLater();
                     }
                 }).start();
+    }
+
+    private void settleBack() {
+        final float w = Math.max(1, box.getWidth());
+        long ms = Anim.dur(getContext(), 240);
+        box.animate().translationX(0).alpha(1f).setDuration(ms).setInterpolator(Anim.gentle(getContext())).start();
+        if (peek.getVisibility() == VISIBLE)
+            peek.animate().translationX(swipeDir * w).setDuration(ms).setInterpolator(Anim.gentle(getContext()))
+                    .withEndAction(new Runnable() { @Override public void run() { peek.setVisibility(GONE); peek.setImageBitmap(null); } }).start();
+        clearDragPill(true);
+    }
+
+    /** While dragging: put the neighbour's picture beside the list and slide the pill part of the way. */
+    private void dragTabs(float dx) {
+        final float w = Math.max(1, box.getWidth());
+        List<String> keys = tabKeys();
+        int i = keys.indexOf(tab);
+        int dir = dx < 0 ? 1 : -1;
+        int next = i + dir;
+        boolean edge = i < 0 || next < 0 || next >= keys.size();
+        float tx = edge ? dx * 0.25f : dx; // resist at the first / last tab
+        box.setTranslationX(tx);
+        if (dir != swipeDir) {
+            swipeDir = dir;
+            android.graphics.Bitmap pic = edge ? null : snaps.get(keys.get(next));
+            peek.setImageBitmap(pic);
+            peek.setVisibility(pic != null ? VISIBLE : GONE);
+        }
+        if (peek.getVisibility() == VISIBLE) peek.setTranslationX(tx + dir * w);
+        else if (!edge) box.setAlpha(1f - Math.min(0.5f, Math.abs(dx) / w));
+        acrylic.invalidate();
+        // pill
+        View from = chipFor(tab), to = edge ? null : chipFor(keys.get(next));
+        if (from == null) return;
+        if (dragPill == null) {
+            dragPill = new android.graphics.drawable.GradientDrawable();
+            dragPill.setColor(Ui.alpha(pal.accent, 0x2E));
+            dragPill.setCornerRadius(Ui.dp(getContext(), 20));
+            dragFromChip = from;
+            dragFromBg = from.getBackground();
+            from.setBackground(null);
+            tabBar.getOverlay().add(dragPill);
+        }
+        android.graphics.Rect a = TabPill.rectOf(from);
+        if (to == null) { dragPill.setBounds(a); return; }
+        TabPill.lerp(pillTmp, a, TabPill.rectOf(to), Math.min(1f, Math.abs(dx) / w));
+        dragPill.setBounds(pillTmp);
+        tabBar.invalidate();
+    }
+
+    private void clearDragPill(boolean restore) {
+        if (dragPill != null) tabBar.getOverlay().remove(dragPill);
+        if (restore && dragFromChip != null && dragFromChip.getBackground() == null) dragFromChip.setBackground(dragFromBg);
+        dragPill = null;
+        dragFromChip = null;
+        dragFromBg = null;
+    }
+
+    /** Keep a small picture of this tab (at the top of its list) so a swipe can show it sliding in. */
+    private void snapLater() {
+        postDelayed(new Runnable() {
+            @Override public void run() {
+                if (!open || searchMode || selecting || scroll.getScrollY() != 0 || box.getTranslationX() != 0) return;
+                int w = box.getWidth(), h = box.getHeight();
+                if (w == 0 || h == 0) return;
+                try {
+                    android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(w / 2, h / 2, android.graphics.Bitmap.Config.ARGB_8888);
+                    android.graphics.Canvas cv = new android.graphics.Canvas(b);
+                    cv.scale(0.5f, 0.5f);
+                    box.draw(cv);
+                    snaps.remove(tab);
+                    snaps.put(tab, b);
+                    while (snaps.size() > 6) { String k = snaps.keySet().iterator().next(); snaps.remove(k); }
+                } catch (Throwable ignored) { }
+            }
+        }, 900); // after the list's own entrance animation
     }
 
     // ------------------------------------------------------------------ swipe down to close, pinch to resize
@@ -1405,10 +1544,7 @@ public class DrawerView extends FrameLayout {
             case MotionEvent.ACTION_MOVE:
                 if (!draggingClose && !swipingTab && shouldStartTabSwipe(ev.getRawX() - downX, ev.getRawY() - downY)) swipingTab = true;
                 if (swipingTab) {
-                    float dx = ev.getRawX() - downX;
-                    box.setTranslationX(dx * 0.55f);
-                    acrylic.invalidate();
-                    box.setAlpha(1f - Math.min(0.5f, Math.abs(dx) / Math.max(1f, getWidth())));
+                    dragTabs(ev.getRawX() - downX);
                     return true;
                 }
                 if (!draggingClose && shouldStartClose(ev.getRawX() - downX, ev.getRawY() - downY)) {
@@ -1429,7 +1565,8 @@ public class DrawerView extends FrameLayout {
                     float dx = ev.getRawX() - downX, vx = vt.getXVelocity();
                     boolean go = ev.getActionMasked() == MotionEvent.ACTION_UP && (Math.abs(dx) > getWidth() * 0.18f || Math.abs(vx) > 900);
                     if (go) switchTab(dx < 0 ? 1 : -1);
-                    else box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 260)).setInterpolator(Anim.gentle(getContext())).start();
+                    else settleBack();
+                    swipeDir = 0;
                     return true;
                 }
                 if (draggingClose) {

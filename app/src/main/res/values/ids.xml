@@ -2,4 +2,5 @@
 <resources>
     <item name="notif_dirty" type="id"/>
     <item name="notif_sig" type="id"/>
+    <item name="tab_id" type="id"/>
 </resources>
