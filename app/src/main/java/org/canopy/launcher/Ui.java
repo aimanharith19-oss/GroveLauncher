@@ -63,12 +63,21 @@ public final class Ui {
         int ui = c.getResources().getConfiguration().uiMode;
         long now = android.os.SystemClock.uptimeMillis();
         Palette k = cached;
-        if (k != null && ui == cachedUiMode && now - cachedAt < 60000L) return k;
+        int sys = systemTone(c); // changes when the wallpaper (Material You) colours change
+        if (k != null && ui == cachedUiMode && sys == cachedSys && now - cachedAt < 60000L) return k;
         k = buildPalette(c);
         cached = k;
         cachedUiMode = ui;
+        cachedSys = sys;
         cachedAt = now;
         return k;
+    }
+
+    private static int cachedSys;
+    /** One of the system's wallpaper-derived colours: when it differs, the cached palette is stale. */
+    public static int systemTone(Context c) {
+        if (android.os.Build.VERSION.SDK_INT < 31) return 0;
+        try { return c.getApplicationContext().getColor(android.R.color.system_accent2_50) ^ c.getApplicationContext().getColor(android.R.color.system_accent1_500); } catch (Throwable t) { return 0; }
     }
 
     private static Palette buildPalette(Context c) {

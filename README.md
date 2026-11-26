@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.58.1
+- **Drawer (and feed, menus) follow a new wallpaper's Material You colours**: the launcher kept its colours cached, so after changing wallpaper the drawer stayed in the old colours until a restart. It now notices the system's new palette and rebuilds with it.
+
 ### What's new in 1.58.0
 - **Undo remove**: removing a widget, app or folder from the home screen shows an *Undo* bar for 7 seconds; tap it and it comes back exactly where it was — a widget keeps its setup, because it is only released after the bar goes away.
 

@@ -154,8 +154,21 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                     if ((which & android.app.WallpaperManager.FLAG_SYSTEM) == 0) return;
                     boolean before = Ui.wallpaperIsLight(LauncherActivity.this);
                     Ui.resetWallpaper();
-                    if (Ui.wallpaperIsLight(LauncherActivity.this) == before) return;
-                    if (resumed) recreate(); else needsRecreate = true;
+                    if (Ui.wallpaperIsLight(LauncherActivity.this) != before) { if (resumed) recreate(); else needsRecreate = true; return; }
+                    // New wallpaper colours (Material You): the system applies its new palette a moment later;
+                    // then the drawer, feed and menus are rebuilt with it.
+                    if (!Prefs.dynamicColor(LauncherActivity.this)) return;
+                    final int was = Ui.systemTone(LauncherActivity.this);
+                    root.postDelayed(new Runnable() {
+                        int tries;
+                        @Override public void run() {
+                            if (isFinishing() || isDestroyed()) return;
+                            if (Ui.systemTone(LauncherActivity.this) != was) {
+                                Ui.clearPaletteCache();
+                                if (resumed) recreate(); else needsRecreate = true;
+                            } else if (++tries < 6) root.postDelayed(this, 1500);
+                        }
+                    }, 1500);
                 }
             };
             try { android.app.WallpaperManager.getInstance(this).addOnColorsChangedListener(wallListener, App.MAIN); } catch (Throwable ignored) { }
