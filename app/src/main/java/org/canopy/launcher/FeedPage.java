@@ -81,6 +81,7 @@ public class FeedPage extends LinearLayout {
     private final LinearLayout cards;
     /** Browser-style tabs: "feed" (the cards) or a web tab id. */
     private final LinearLayout tabBar;
+    private View selChip; // the tab (or the icon inside a group) the strip's pill sits on
     private final android.widget.HorizontalScrollView tabScroll;
     private final ScrollView cardsScroll;
     private final LinearLayout webPane;
@@ -101,7 +102,13 @@ public class FeedPage extends LinearLayout {
         setOrientation(VERTICAL);
         tabScroll = new android.widget.HorizontalScrollView(c);
         tabScroll.setHorizontalScrollBarEnabled(false);
-        tabBar = new LinearLayout(c);
+        tabBar = new PillStrip(c);
+        // one selection ring that glides from tab to tab (drawn over the tabs, so it also works inside group pills)
+        android.graphics.drawable.GradientDrawable ring = new android.graphics.drawable.GradientDrawable();
+        ring.setColor(Ui.alpha(pal.accent, 0x26));
+        ring.setStroke(Ui.dp(c, 2), pal.accent);
+        ring.setCornerRadius(Ui.dp(c, 18));
+        ((PillStrip) tabBar).setPill(ring, true);
         tabBar.setGravity(Gravity.CENTER_VERTICAL);
         tabBar.setPadding(Ui.dp(c, 12), Ui.dp(c, 6), Ui.dp(c, 12), Ui.dp(c, 6));
         tabScroll.addView(tabBar);
@@ -402,6 +409,7 @@ public class FeedPage extends LinearLayout {
     public void buildTabs() {
         Context c = getContext();
         tabBar.removeAllViews();
+        selChip = null;
         View fc = tabChip("feed", FeedWeb.prefs(c).getString("feed_tab_name", "Feed"), null, R.drawable.ic_feed);
         fc.setTag(R.id.tab_id, "feed");
         tabBar.addView(fc);
@@ -428,6 +436,7 @@ public class FeedPage extends LinearLayout {
         LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(Ui.dp(c, 36), Ui.dp(c, 36));
         plp.leftMargin = Ui.dp(c, 4);
         tabBar.addView(plus, plp);
+        ((PillStrip) tabBar).select(selChip);
     }
 
     private android.graphics.drawable.Drawable tabIcon(String id, boolean on) {
@@ -450,24 +459,17 @@ public class FeedPage extends LinearLayout {
         pill.setGravity(Gravity.CENTER_VERTICAL);
         pill.setPadding(Ui.dp(c, 6), Ui.dp(c, 4), Ui.dp(c, 6), Ui.dp(c, 4));
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-        bg.setColor(has ? Ui.alpha(surf, 0xF2) : Ui.alpha(surf, 0x66));
+        bg.setColor(Ui.alpha(surf, has ? 0xC0 : 0x66));
         bg.setCornerRadius(Ui.dp(c, 18));
-        bg.setStroke(Ui.dp(c, 1.5f), Ui.alpha(pal.accent, has ? 0xFF : 0x99));
+        bg.setStroke(Ui.dp(c, 1.5f), Ui.alpha(pal.accent, 0x99));
         pill.setBackground(bg);
-        if (has) pill.setElevation(Ui.dp(c, 2));
         for (final String id : members) {
             boolean on = id.equals(current);
             ImageView iv = new ImageView(c);
             iv.setImageDrawable(tabIcon(id, on));
             int p = Ui.dp(c, on ? 4 : 5);
             iv.setPadding(p, p, p, p);
-            if (on) {
-                android.graphics.drawable.GradientDrawable ring = new android.graphics.drawable.GradientDrawable();
-                ring.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-                ring.setColor(Ui.alpha(pal.accent, 0x33));
-                ring.setStroke(Ui.dp(c, 2), pal.accent);
-                iv.setBackground(ring);
-            }
+            if (on) selChip = iv;
             iv.setContentDescription(FeedWeb.title(c, id));
             iv.setTooltipText(FeedWeb.title(c, id));
             iv.setOnClickListener(new OnClickListener() {
@@ -503,14 +505,7 @@ public class FeedPage extends LinearLayout {
         iv.setContentDescription(a != null ? a.label : "App");
         iv.setTooltipText(a != null ? a.label : "App");
         boolean on = id.equals(current);
-        if (on) {
-            android.graphics.drawable.GradientDrawable ring = new android.graphics.drawable.GradientDrawable();
-            ring.setCornerRadius(Ui.dp(c, 18));
-            ring.setColor(Ui.alpha(surf, 0xF2));
-            ring.setStroke(Ui.dp(c, 2), pal.accent);
-            iv.setBackground(ring);
-            iv.setElevation(Ui.dp(c, 2));
-        }
+        if (on) selChip = iv;
         iv.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) {
                 if (id.equals(current)) { android.webkit.WebView wv = launcher.peekFeedWebView(id); if (wv != null) wv.pageUp(true); }
@@ -578,8 +573,8 @@ public class FeedPage extends LinearLayout {
         final boolean iconOnly = FeedWeb.prefs(c).getBoolean("web_icon_only", false) && !"feed".equals(id);
         boolean closable = !"feed".equals(id) && !iconOnly; // icon-only tabs close from the long-press menu
         chip.setPadding(Ui.dp(c, iconOnly ? 10 : 12), Ui.dp(c, 7), Ui.dp(c, iconOnly ? 10 : closable ? 6 : 14), Ui.dp(c, 7));
-        chip.setBackground(Ui.pressable(c, on ? Ui.alpha(surf, 0xF2) : Ui.alpha(surf, 0x66), Ui.dp(c, 18)));
-        if (on) chip.setElevation(Ui.dp(c, 2));
+        chip.setBackground(Ui.pressable(c, Ui.alpha(surf, on ? 0xC0 : 0x66), Ui.dp(c, 18)));
+        if (on) selChip = chip;
         ImageView iv = new ImageView(c);
         if (favicon != null) iv.setImageBitmap(favicon);
         else if (iconRes != 0) iv.setImageDrawable(Ui.tinted(c, iconRes, on ? pal.accent : pal.text));
@@ -663,7 +658,6 @@ public class FeedPage extends LinearLayout {
     /** Switch tab: the feed cards, or one website filling the page. */
     public void showTab(String id) {
         final String before = current;
-        final android.graphics.Rect fromRect = TabPill.rectOf(before != null ? chipFor(before) : null);
         Context c = getContext();
         // app tabs open the real app (in a floating window where the phone allows it) — unless you chose
         // "Open its website in the feed" for that tab
@@ -673,15 +667,8 @@ public class FeedPage extends LinearLayout {
         current = id;
         FeedWeb.prefs(c).edit().putString("current", id).apply();
         buildTabs();
-        // YouTube-style: the selected pill slides to the new tab and the page slides in from that side
+        // the strip's ring glides to the new tab; the page slides in from that side
         final String now = id;
-        if (fromRect != null && !now.equals(before)) tabBar.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
-            @Override public boolean onPreDraw() {
-                tabBar.getViewTreeObserver().removeOnPreDrawListener(this);
-                TabPill.slide(tabBar, fromRect, chipFor(now), 260);
-                return true;
-            }
-        });
         int dir = before == null || now.equals(before) ? 0 : (tabOrder(now) > tabOrder(before) ? 1 : -1);
         View in;
         if ("feed".equals(id)) {

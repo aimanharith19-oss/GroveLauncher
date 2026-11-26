@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.62.0
+- **Tab pill that really glides** (drawer and feed): the highlight is now one pill that belongs to the tab strip, not a background on each tab, so it can't flash or skip when the tabs are rebuilt. It glides and stretches to the tab you pick, follows your finger while you swipe between drawer tabs, and carries on smoothly if you change your mind mid-way. In the feed it is a ring that glides between tabs, app tabs and the icons inside groups.
+
 ### What's new in 1.61.2
 - **Split screen: no more empty dark half**. Android doesn't draw the wallpaper behind apps in split screen, so Grove (home screen or settings) showed as a blank dark half. In split screen they now get a solid Material You background, and the home screen opens its app list so you can pick the second app.
 

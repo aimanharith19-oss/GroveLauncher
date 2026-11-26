@@ -79,12 +79,7 @@ public class DrawerView extends FrameLayout {
     // ---- YouTube-style tab paging: the list follows the finger, the next tab slides in beside it, the pill slides along
     private ImageView peek;                       // a picture of the neighbouring tab, slid in beside the list
     private final java.util.LinkedHashMap<String, android.graphics.Bitmap> snaps = new java.util.LinkedHashMap<>();
-    private android.graphics.drawable.GradientDrawable dragPill;
-    private View dragFromChip;
-    private android.graphics.drawable.Drawable dragFromBg;
     private int swipeDir;                         // +1 = towards the next tab, -1 = previous
-    private final android.graphics.Rect pillTmp = new android.graphics.Rect();
-    private android.graphics.Rect pendingPillFrom;
     private int keepScroll = -1; // where the strip was before it was rebuilt (a rebuild would jump it to the start)
     private View revealTab; // the selected tab: shown in full once the strip has been laid out
     private final Ui.Palette pal;
@@ -164,7 +159,11 @@ public class DrawerView extends FrameLayout {
         tabScroll = new HorizontalScrollView(c);
         tabScroll.setHorizontalScrollBarEnabled(false);
         // The strip is as wide as its tabs (so it always scrolls all the way to the last one) and is centred when they are few.
-        tabBar = new LinearLayout(c);
+        tabBar = new PillStrip(c);
+        android.graphics.drawable.GradientDrawable tabPill = new android.graphics.drawable.GradientDrawable();
+        tabPill.setColor(Ui.alpha(pal.accent, 0x2E));
+        tabPill.setCornerRadius(Ui.dp(c, 20));
+        ((PillStrip) tabBar).setPill(tabPill, false);
         tabBar.setGravity(Gravity.CENTER);
         tabBar.addOnLayoutChangeListener(new OnLayoutChangeListener() {
             @Override public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
@@ -695,15 +694,7 @@ public class DrawerView extends FrameLayout {
         addChip(tabName("all", "All"), "all", null);
         if (work) { addChip(tabName("personal", "Personal"), "personal", null); addChip(tabName("work", "Work"), "work", null); }
         for (DrawerGroups.Group g : tabs) addChip(g.name, "t" + g.id, g);
-        final android.graphics.Rect from = pendingPillFrom;
-        pendingPillFrom = null;
-        if (from != null) tabBar.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
-            @Override public boolean onPreDraw() {
-                tabBar.getViewTreeObserver().removeOnPreDrawListener(this);
-                TabPill.slide(tabBar, from, chipFor(tab), 260);
-                return true;
-            }
-        });
+        ((PillStrip) tabBar).select(chipFor(tab));
     }
 
     private View chipFor(String key) {
@@ -723,7 +714,7 @@ public class DrawerView extends FrameLayout {
         t.setGravity(Gravity.CENTER);
         t.setMinWidth(Ui.dp(c, small ? 52 : 64));
         t.setPadding(Ui.dp(c, small ? 14 : 18), Ui.dp(c, 9), Ui.dp(c, small ? 14 : 18), Ui.dp(c, 9));
-        t.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.accent, 0x2E) : 0x00000000, Ui.dp(c, 20)));
+        t.setBackground(Ui.pressable(c, 0x00000000, Ui.dp(c, 20)));
         t.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) {
                 if (key.equals(tab)) return;
@@ -1374,15 +1365,11 @@ public class DrawerView extends FrameLayout {
         if (Anim.haptics(getContext())) performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
         final View fromChip = chipFor(tab);
         final View toChip = chipFor(key);
-        final android.graphics.Rect fromRect = dragPill != null ? new android.graphics.Rect(dragPill.getBounds()) : TabPill.rectOf(fromChip);
-        clearDragPill(false);
-        if (toChip != null && fromRect != null) {
-            // the pill slides now, on the old strip; the strip is rebuilt when the content lands
-            TabPill.slide(tabBar, fromRect, toChip, 240);
-            if (fromChip != null && fromChip != toChip) fromChip.setBackground(null); // the strip is rebuilt when the list lands
-            ((TextView) toChip).setTextColor(pal.accent);
-            if (fromChip instanceof TextView && fromChip != toChip) ((TextView) fromChip).setTextColor(pal.subtext);
-        }
+        // the pill glides now; the strip is rebuilt when the list lands and the pill simply carries on to the same spot
+        ((PillStrip) tabBar).select(toChip);
+        ((PillStrip) tabBar).endDrag();
+        if (toChip instanceof TextView) ((TextView) toChip).setTextColor(pal.accent);
+        if (fromChip instanceof TextView && fromChip != toChip) ((TextView) fromChip).setTextColor(pal.subtext);
         android.graphics.Bitmap pic = snaps.get(key);
         long ms = Anim.dur(getContext(), Math.max(120, Math.round(260 * (1f - Math.min(0.9f, done)))));
         if (pic != null) {
@@ -1420,7 +1407,7 @@ public class DrawerView extends FrameLayout {
         if (peek.getVisibility() == VISIBLE)
             peek.animate().translationX(swipeDir * w).setDuration(ms).setInterpolator(Anim.gentle(getContext()))
                     .withEndAction(new Runnable() { @Override public void run() { peek.setVisibility(GONE); peek.setImageBitmap(null); } }).start();
-        clearDragPill(true);
+        ((PillStrip) tabBar).endDrag();
     }
 
     /** While dragging: put the neighbour's picture beside the list and slide the pill part of the way. */
@@ -1442,31 +1429,8 @@ public class DrawerView extends FrameLayout {
         if (peek.getVisibility() == VISIBLE) peek.setTranslationX(tx + dir * w);
         else if (!edge) box.setAlpha(1f - Math.min(0.5f, Math.abs(dx) / w));
         acrylic.invalidate();
-        // pill
-        View from = chipFor(tab), to = edge ? null : chipFor(keys.get(next));
-        if (from == null) return;
-        if (dragPill == null) {
-            dragPill = new android.graphics.drawable.GradientDrawable();
-            dragPill.setColor(Ui.alpha(pal.accent, 0x2E));
-            dragPill.setCornerRadius(Ui.dp(getContext(), 20));
-            dragFromChip = from;
-            dragFromBg = from.getBackground();
-            from.setBackground(null);
-            tabBar.getOverlay().add(dragPill);
-        }
-        android.graphics.Rect a = TabPill.rectOf(from);
-        if (to == null) { dragPill.setBounds(a); return; }
-        TabPill.lerp(pillTmp, a, TabPill.rectOf(to), Math.min(1f, Math.abs(dx) / w));
-        dragPill.setBounds(pillTmp);
-        tabBar.invalidate();
-    }
-
-    private void clearDragPill(boolean restore) {
-        if (dragPill != null) tabBar.getOverlay().remove(dragPill);
-        if (restore && dragFromChip != null && dragFromChip.getBackground() == null) dragFromChip.setBackground(dragFromBg);
-        dragPill = null;
-        dragFromChip = null;
-        dragFromBg = null;
+        // the pill follows the finger
+        ((PillStrip) tabBar).drag(chipFor(tab), edge ? null : chipFor(keys.get(next)), Math.min(1f, Math.abs(dx) / w));
     }
 
     /** Keep a small picture of this tab (at the top of its list) so a swipe can show it sliding in. */
