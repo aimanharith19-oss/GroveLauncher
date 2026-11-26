@@ -1395,7 +1395,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (overlayAnim != null) overlayAnim.cancel();
         overlayAnim = android.animation.ValueAnimator.ofFloat(overlayAmt, on ? 1f : 0f);
         overlayAnim.setDuration(Anim.dur(this, on ? 320 : 240));
-        overlayAnim.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        overlayAnim.setInterpolator(Anim.calm(this) ? Anim.STANDARD : new android.view.animation.DecelerateInterpolator());
         overlayAnim.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
             @Override public void onAnimationUpdate(android.animation.ValueAnimator a) {
                 overlayAmt = (Float) a.getAnimatedValue();

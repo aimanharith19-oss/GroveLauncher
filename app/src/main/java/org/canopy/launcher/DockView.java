@@ -106,7 +106,7 @@ public class DockView extends LinearLayout {
         if (e) {
             expanded.setAlpha(0f);
             expanded.setTranslationY(Ui.dp(getContext(), 30));
-            expanded.animate().alpha(1f).translationY(0).setDuration(Anim.dur(getContext(), Anim.fluid(getContext()) ? 420 : 200))
+            expanded.animate().alpha(1f).translationY(0).setDuration(Anim.dur(getContext(), Anim.fluid(getContext()) ? 420 : Anim.calm(getContext()) ? 300 : 200))
                     .setInterpolator(Anim.open(getContext())).start();
         }
     }

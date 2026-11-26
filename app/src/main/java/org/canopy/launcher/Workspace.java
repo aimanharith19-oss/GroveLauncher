@@ -62,7 +62,7 @@ public class Workspace extends ViewGroup {
         // Free-placed widgets may hang past a page's grid, right up to the screen edge.
         setClipChildren(false);
         setClipToPadding(false);
-        scroller = new OverScroller(c, Anim.fluid(c) ? new Anim.Spring(8.5f, 5.5f) : new DecelerateInterpolator(1.6f));
+        scroller = new OverScroller(c, Anim.fluid(c) ? new Anim.Spring(8.5f, 5.5f) : Anim.calm(c) ? Anim.STANDARD : new DecelerateInterpolator(1.6f));
         ViewConfiguration vc = ViewConfiguration.get(c);
         slop = vc.getScaledTouchSlop();
         minFling = vc.getScaledMinimumFlingVelocity() * 6;

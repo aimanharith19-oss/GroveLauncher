@@ -353,7 +353,11 @@ public class IconView extends View {
                     .setInterpolator(s < 1 ? new android.view.animation.DecelerateInterpolator() : new Anim.Spring(6f, 12f)).start();
             return;
         }
-        if (fluid) {
+        if (Anim.calm(getContext())) {
+            // a light press, a smooth release
+            animate().scaleX(s < 1 ? 0.92f : 1f).scaleY(s < 1 ? 0.92f : 1f)
+                    .setDuration(Anim.dur(getContext(), s < 1 ? 100 : 220)).setInterpolator(Anim.STANDARD).start();
+        } else if (fluid) {
             // squishy press, springy release
             animate().scaleX(s < 1 ? 0.86f : 1f).scaleY(s < 1 ? 0.86f : 1f)
                     .setDuration(Anim.dur(getContext(), s < 1 ? 140 : 380))

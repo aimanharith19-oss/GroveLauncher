@@ -1245,12 +1245,12 @@ public class DrawerView extends FrameLayout {
         } else {
             setTranslationY(Anim.fluid(c) ? h * 0.35f : h);
             setAlpha(Anim.fluid(c) ? 0f : 0.6f);
-            animate().translationY(0).alpha(1f).setDuration(Anim.dur(c, Anim.fluid(c) ? 520 : 260))
+            animate().translationY(0).alpha(1f).setDuration(Anim.dur(c, Anim.fluid(c) ? 520 : Anim.calm(c) ? 380 : 260))
                     .setInterpolator(Anim.open(c)).withLayer().start();
         }
         scroll.scrollTo(0, 0);
         // rebuilding the grid waits for the slide to finish, so the swipe itself stays smooth
-        if (Prefs.drawerRows(c) > 0) postDelayed(new Runnable() { @Override public void run() { if (open) refresh(); } }, Anim.dur(c, Anim.fluid(c) ? 540 : 280));
+        if (Prefs.drawerRows(c) > 0) postDelayed(new Runnable() { @Override public void run() { if (open) refresh(); } }, Anim.dur(c, Anim.fluid(c) ? 540 : Anim.calm(c) ? 400 : 280));
         revealList();
         snapLater();
         if (focusSearch || Prefs.sp(c).getBoolean("drawer_keyboard", false)) expandSearch(true);

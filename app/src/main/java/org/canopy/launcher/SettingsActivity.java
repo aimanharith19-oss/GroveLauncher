@@ -443,8 +443,9 @@ public class SettingsActivity extends Activity {
                 @Override public void run() { startActivity(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
             });
         }
-        choice("Animation style", "anim_style", new String[]{"fluid", "classic", "minimal"},
-                new String[]{"Fluid (springy, Niagara-like)", "Classic (Nova-like)", "Minimal (reduced motion)"}, "fluid");
+        Anim.style(this); // (applies the one-time switch to Calm before showing the choice)
+        choice("Animation style", "anim_style", new String[]{"calm", "fluid", "classic", "minimal"},
+                new String[]{"Calm (smooth, no bounce)", "Bouncy (springy)", "Classic (Nova-like)", "Minimal (reduced motion)"}, "calm");
         slider("Animation speed", "anim_speed", 50, 200, 100, "%");
         choice("Page transition", "transition", Prefs.TRANSITIONS, Prefs.TRANSITION_LABELS, "slide");
         if (sp.getInt("home_pages", 1) < 2) {

@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.61.0
+- **Calm animations (new default)**: smooth Material 3 motion everywhere — quick to start, a long gentle settle, never bouncing past where it stops. The drawer, folders, menus, page swipes, icon presses, the feed and the dock all use it. The springy style is still there as *Bouncy* (Settings > Animation style); phones on the old springy default are switched to Calm once.
+
 ### What's new in 1.60.0
 **Tablets, foldables, landscape and split screen** (following Material 3's adaptive-layout guidance: window size classes at 600 / 840 dp)
 - **Big screens use the room**: on a tablet or an unfolded foldable the home grid defaults to 6 × 5 with roomier sides; the dock and search bar stay a comfortable width, centred; the app drawer gets more columns (about one per 105 dp, its own pinch setting for wide windows) with the search bar and tabs kept to a readable width; the feed becomes two columns of cards (840 dp+) or a centred column (600–840 dp).

@@ -159,7 +159,7 @@ public class FolderView extends FrameLayout {
         card.setScaleX(0.3f);
         card.setScaleY(0.3f);
         card.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(Anim.dur(getContext(), 260))
-                .setInterpolator(new android.view.animation.OvershootInterpolator(1.1f)).start();
+                .setInterpolator(Anim.fluid(getContext()) ? new android.view.animation.OvershootInterpolator(1.1f) : Anim.open(getContext())).start();
     }
 
     /** Rounded card with a small tail, like a conversation bubble. */
