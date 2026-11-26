@@ -240,6 +240,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     }
 
     @Override protected void onStop() {
+        finishPendingRemove(); // leaving the home screen makes a removal final
         super.onStop();
         stopped = true;
         shown = false;
@@ -2109,14 +2110,66 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
                 });
     }
 
-    private void removeItem(HomeItem item) {
-        if (item.type == HomeItem.WIDGET) {
-            try { widgetHost.deleteAppWidgetId(item.widgetId); } catch (Exception ignored) { }
-            widgetViews.remove(item.widgetId);
-        }
+    private void removeItem(final HomeItem item) {
+        finishPendingRemove(); // only the latest removal can be undone
+        if (item.type == HomeItem.WIDGET) widgetViews.remove(item.widgetId); // the widget itself is kept until the undo bar goes away
         store.detach(item);
         store.commit();
         requestBind();
+        pendingRemoved = item;
+        showUndoBar(item);
+    }
+
+    // ------------------------------------------------------------------ undo a removal
+    private HomeItem pendingRemoved;
+    private View undoBar;
+    private final Runnable undoTimeout = new Runnable() { @Override public void run() { finishPendingRemove(); } };
+
+    /** The removal is final: hide the bar and, for a widget, give its id back to Android. */
+    private void finishPendingRemove() {
+        root.removeCallbacks(undoTimeout);
+        if (undoBar != null) { final View b = undoBar; undoBar = null; b.animate().alpha(0f).translationY(Ui.dp(this, 24)).setDuration(180).withEndAction(new Runnable() { @Override public void run() { root.removeView(b); } }).start(); }
+        HomeItem it = pendingRemoved;
+        pendingRemoved = null;
+        if (it != null && it.type == HomeItem.WIDGET) {
+            try { widgetHost.deleteAppWidgetId(it.widgetId); } catch (Exception ignored) { }
+        }
+    }
+
+    private void undoRemove() {
+        HomeItem it = pendingRemoved;
+        pendingRemoved = null;
+        root.removeCallbacks(undoTimeout);
+        if (undoBar != null) { root.removeView(undoBar); undoBar = null; }
+        if (it == null) return;
+        store.addTop(it);
+        store.commit();
+        bindAll();
+    }
+
+    private void showUndoBar(HomeItem item) {
+        Ui.Palette pal = Ui.palette(this);
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(Ui.dp(this, 18), Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6));
+        bar.setBackground(Ui.round(pal.surface, Ui.dp(this, 24)));
+        bar.setElevation(Ui.dp(this, 8));
+        String what = item.type == HomeItem.WIDGET ? "Widget removed" : item.type == HomeItem.FOLDER ? "Folder removed" : "Removed from home";
+        bar.addView(Ui.text(this, what, 14, pal.text), new LinearLayout.LayoutParams(0, -2, 1));
+        TextView undo = Ui.text(this, "Undo", 15, pal.accent);
+        undo.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        undo.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), Ui.dp(this, 10));
+        undo.setBackground(Ui.pressable(this, 0x00000000, Ui.dp(this, 20)));
+        undo.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { undoRemove(); } });
+        bar.addView(undo);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
+        lp.setMargins(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 120));
+        root.addView(bar, lp);
+        bar.setAlpha(0f);
+        bar.setTranslationY(Ui.dp(this, 24));
+        bar.animate().alpha(1f).translationY(0f).setDuration(200).start();
+        undoBar = bar;
+        root.postDelayed(undoTimeout, 7000);
     }
 
     private void addAppToHome(AppInfo a) {
