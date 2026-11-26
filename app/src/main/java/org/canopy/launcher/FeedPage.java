@@ -1148,6 +1148,24 @@ public class FeedPage extends LinearLayout {
         dropSmartspacer();
 
         cards.addView(profileHeader());
+        // big screens: a comfortable reading width, and two columns of cards when there's room (tablet / unfolded / landscape)
+        int side = Math.max(Ui.dp(c, 14), Ui.sideFor(c, Ui.widthDp(c) >= 840 ? 1100 : 680));
+        cards.setPadding(side, cards.getPaddingTop(), side, cards.getPaddingBottom());
+        final boolean twoCols = Ui.widthDp(c) >= 840;
+        LinearLayout colA = null, colB = null;
+        if (twoCols) {
+            LinearLayout row = new LinearLayout(c);
+            row.setOrientation(HORIZONTAL);
+            colA = new LinearLayout(c); colA.setOrientation(VERTICAL);
+            colB = new LinearLayout(c); colB.setOrientation(VERTICAL);
+            LinearLayout.LayoutParams la = new LinearLayout.LayoutParams(0, -2, 1), lb = new LinearLayout.LayoutParams(0, -2, 1);
+            la.rightMargin = Ui.dp(c, 8);
+            lb.leftMargin = Ui.dp(c, 8);
+            row.addView(colA, la);
+            row.addView(colB, lb);
+            cards.addView(row, new LinearLayout.LayoutParams(-1, -2));
+        }
+        int nCard = 0;
 
         for (String id : order()) {
             if (!visible(id)) continue;
@@ -1167,7 +1185,8 @@ public class FeedPage extends LinearLayout {
             else if ("dns".equals(id)) body = dnsBody();
             else continue;
             if (body == null) continue;
-            cards.addView(card(id, body));
+            if (twoCols) (nCard++ % 2 == 0 ? colA : colB).addView(card(id, body));
+            else cards.addView(card(id, body));
         }
 
         LinearLayout actions = new LinearLayout(c);

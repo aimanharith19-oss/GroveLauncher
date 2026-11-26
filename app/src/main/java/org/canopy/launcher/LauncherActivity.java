@@ -131,7 +131,9 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         // draw under the camera cut-out / status bar area at all times (with the status bar hidden, Android otherwise leaves a bare strip of wallpaper at the top)
         if (android.os.Build.VERSION.SDK_INT >= 30) getWindow().getAttributes().layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         else if (android.os.Build.VERSION.SDK_INT >= 28) getWindow().getAttributes().layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-        if (!Prefs.sp(this).getBoolean("allow_rotation", false)) {
+        lastWDp = getResources().getConfiguration().screenWidthDp;
+        lastHDp = getResources().getConfiguration().screenHeightDp;
+        if (!Prefs.allowRotation(this)) {
             setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         repo = AppRepository.get(this);
@@ -252,6 +254,39 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         else root.postDelayed(sleepWebRunnable, FeedWeb.BG_GRACE);
     }
 
+    // ------------------------------------------------------------------ rotation, fold / unfold, split screen
+
+    private int lastWDp, lastHDp;
+    private boolean pendingRelayout;
+
+    /** Rotating, folding / unfolding or resizing the window rebuilds the home screen for the new size
+     *  (grid, drawer columns, two-column feed, centred dock). Not while a video plays full screen. */
+    @Override public void onConfigurationChanged(android.content.res.Configuration cfg) {
+        super.onConfigurationChanged(cfg);
+        if (cfg.screenWidthDp == lastWDp && cfg.screenHeightDp == lastHDp) return;
+        lastWDp = cfg.screenWidthDp;
+        lastHDp = cfg.screenHeightDp;
+        if (videoDialog != null) { pendingRelayout = true; return; }
+        Ui.clearPaletteCache();
+        root.post(new Runnable() { @Override public void run() { if (!isFinishing()) recreate(); } });
+    }
+
+    /** Split screen: the home screen in the other half becomes an app picker, and apps open in that half. */
+    @Override public void onMultiWindowModeChanged(boolean inMw, android.content.res.Configuration cfg) {
+        super.onMultiWindowModeChanged(inMw, cfg);
+        repo.adjacent = inMw;
+        if (inMw && drawer != null && !drawer.isOpen() && !mwPickerShown) {
+            mwPickerShown = true;
+            root.post(new Runnable() {
+                @Override public void run() {
+                    if (!isInMultiWindowMode() || drawer.isOpen()) return;
+                    drawer.open(false);
+                    Ui.toast(LauncherActivity.this, "Pick an app for this half of the screen");
+                }
+            });
+        }
+    }
+
     @Override protected void onStop() {
         finishPendingRemove(); // leaving the home screen makes a removal final
         super.onStop();
@@ -358,6 +393,14 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         catch (Exception e) { repo.launch(a, null); }
     }
 
+    /** Open an app beside the one that is running (split screen / multi-window). */
+    void openSplit(AppInfo a) {
+        if (repo.launchAdjacent(a)) {
+            if (!isInMultiWindowMode())
+                Ui.toast(this, "If it opened full screen: open Recents, tap the app's icon > Split screen, then pick the second app here");
+        } else repo.launch(a, null);
+    }
+
     public void pauseWebMedia() {
         for (android.webkit.WebView wv : webViews.values()) wv.evaluateJavascript(FeedWeb.PAUSE_JS, null);
     }
@@ -381,7 +424,8 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         d.setOnDismissListener(new android.content.DialogInterface.OnDismissListener() {
             @Override public void onDismiss(android.content.DialogInterface di) {
                 if (videoDialog == d) videoDialog = null;
-                setRequestedOrientation(Prefs.sp(LauncherActivity.this).getBoolean("allow_rotation", false)
+                if (pendingRelayout) { pendingRelayout = false; root.post(new Runnable() { @Override public void run() { recreate(); } }); }
+                setRequestedOrientation(Prefs.allowRotation(LauncherActivity.this)
                         ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                         : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                 android.webkit.WebChromeClient.CustomViewCallback c = videoCallback;
@@ -414,7 +458,16 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (videoDialog != null) { android.app.Dialog d = videoDialog; videoDialog = null; d.dismiss(); }
     }
 
+    private boolean mwPickerShown;
+
     @Override protected void onResume() {
+        // split screen (also after the window was rebuilt for its new size): open the app list once as a picker
+        repo.adjacent = isInMultiWindowMode();
+        if (repo.adjacent && !mwPickerShown && drawer != null) {
+            mwPickerShown = true;
+            root.post(new Runnable() { @Override public void run() { if (isInMultiWindowMode() && !drawer.isOpen()) drawer.open(false); } });
+        }
+        if (!repo.adjacent) mwPickerShown = false;
         try { WebHistory.autoSync(this); } catch (Throwable ignored) { }
         super.onResume();
         resumed = true;
@@ -685,21 +738,24 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         String sb = Prefs.searchBar(this);
         int pillH = "none".equals(sb) ? 0 : Ui.dp(this, 46) + gap;
         int bottomPill = "bottom".equals(sb) ? pillH : 0, topPill = "top".equals(sb) ? pillH : 0;
+        // big screens: the search bar and dock stay a comfortable width, centred (like Pixel Tablet / One UI)
+        int sideSearch = Ui.sideFor(this, 640), sideDock = Ui.sideFor(this, Math.max(560, Prefs.dockCount(this) * 96 + 40));
         FrameLayout.LayoutParams pl = (FrameLayout.LayoutParams) searchPill.getLayoutParams();
-        pl.leftMargin = insetLeft + gap * 2;
-        pl.rightMargin = insetRight + gap * 2;
+        pl.leftMargin = insetLeft + gap * 2 + sideSearch;
+        pl.rightMargin = insetRight + gap * 2 + sideSearch;
         pl.topMargin = insetTop + gap;
         pl.bottomMargin = insetBottom + gap;
         searchPill.setLayoutParams(pl);
         FrameLayout.LayoutParams dl = (FrameLayout.LayoutParams) dock.getLayoutParams();
         dl.bottomMargin = insetBottom + gap + bottomPill;
-        dl.leftMargin = insetLeft + gap;
-        dl.rightMargin = insetRight + gap;
+        dl.leftMargin = insetLeft + gap + sideDock;
+        dl.rightMargin = insetRight + gap + sideDock;
         dock.setLayoutParams(dl);
         FrameLayout.LayoutParams il = (FrameLayout.LayoutParams) indicator.getLayoutParams();
         il.bottomMargin = insetBottom + gap + bottomPill + dockH + Ui.dp(this, 4);
         indicator.setLayoutParams(il);
-        workspace.setPadding(insetLeft + Ui.dp(this, 4), insetTop + Ui.dp(this, 6) + topPill, insetRight + Ui.dp(this, 4),
+        int ws = Ui.wide(this) ? Ui.dp(this, 20) : Ui.dp(this, 4); // a little more breathing room at the sides on big screens
+        workspace.setPadding(insetLeft + ws, insetTop + Ui.dp(this, 6) + topPill, insetRight + ws,
                 insetBottom + gap + bottomPill + dockH + Ui.dp(this, 22));
         dropBar.setPadding(0, insetTop, 0, Ui.dp(this, 12));
         workspace.setFeedBottom(0);          // the feed runs under the navigation bar, like the drawer
@@ -1729,6 +1785,11 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (app != null && !Prefs.desktopLocked(this)) {
             entries.add(new MenuEntry(R.drawable.ic_edit, "Edit icon & name", new Runnable() {
                 @Override public void run() { IconEditor.show(LauncherActivity.this, app); }
+            }));
+        }
+        if (app != null) {
+            entries.add(new MenuEntry(R.drawable.ic_split, "Open in split screen", new Runnable() {
+                @Override public void run() { openSplit(app); }
             }));
         }
         if (app != null) {

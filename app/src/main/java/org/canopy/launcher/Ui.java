@@ -115,13 +115,25 @@ public final class Ui {
         return p;
     }
 
+    /** Tablet or unfolded foldable (Material "medium / expanded": the shorter side is 600 dp or more). */
+    public static boolean large(Context c) { return c.getResources().getConfiguration().smallestScreenWidthDp >= 600; }
+    /** The window is wide right now (tablet, unfolded foldable, or any landscape that is 600 dp+ wide). */
+    public static boolean wide(Context c) { return c.getResources().getConfiguration().screenWidthDp >= 600; }
+    /** Width in dp of the current window. */
+    public static int widthDp(Context c) { return c.getResources().getConfiguration().screenWidthDp; }
+    /** Side space that keeps a bar / list a comfortable reading width on big screens (0 on phones). */
+    public static int sideFor(Context c, int maxDp) {
+        int w = widthDp(c);
+        return w > maxDp ? dp(c, (w - maxDp) / 2f) : 0;
+    }
+
     private static int smallPhone = -1;
     /** True on phones under 6.5 inches (screen diagonal): the home screen then uses slightly smaller icons and one row fewer by default. */
     public static boolean smallPhone(Context c) {
         if (smallPhone < 0) {
             android.util.DisplayMetrics m = c.getResources().getDisplayMetrics();
             double w = m.widthPixels / (double) m.xdpi, h = m.heightPixels / (double) m.ydpi;
-            smallPhone = Math.sqrt(w * w + h * h) < 6.5 ? 1 : 0;
+            smallPhone = Math.sqrt(w * w + h * h) < 6.5 && !large(c) ? 1 : 0;
         }
         return smallPhone == 1;
     }

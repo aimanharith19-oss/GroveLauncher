@@ -28,6 +28,12 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.60.0
+**Tablets, foldables, landscape and split screen** (following Material 3's adaptive-layout guidance: window size classes at 600 / 840 dp)
+- **Big screens use the room**: on a tablet or an unfolded foldable the home grid defaults to 6 × 5 with roomier sides; the dock and search bar stay a comfortable width, centred; the app drawer gets more columns (about one per 105 dp, its own pinch setting for wide windows) with the search bar and tabs kept to a readable width; the feed becomes two columns of cards (840 dp+) or a centred column (600–840 dp).
+- **Rotation**: on by default on tablets and foldables (Settings > *Allow home screen rotation*). Rotating, folding or unfolding rebuilds the home screen for the new shape, instead of stretching the old one. A full-screen video waits until it's closed.
+- **Split screen / multi-window**: when the home screen shares the screen with another app, it opens the app list as a picker and the app you choose opens in that half. Long-press any app > *Open in split screen* to start one beside what's running.
+
 ### What's new in 1.59.0
 - **YouTube-style tabs** in the app drawer and the feed: the highlighted pill slides (and stretches) from one tab to the next instead of jumping, and the page slides in from that side. In the drawer, swiping left / right now drags the list with your finger, with the next tab sliding in beside it, and the pill follows the swipe.
 

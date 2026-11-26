@@ -241,7 +241,25 @@ public final class AppRepository {
         }, 650);
     }
 
+    /** True while the launcher shares the screen with another app: apps then open in its half. */
+    public volatile boolean adjacent;
+
+    /** Start an app next to the current one (split screen). False if it couldn't be done that way. */
+    public boolean launchAdjacent(AppInfo a) {
+        if (a.user != null && !a.user.equals(android.os.Process.myUserHandle())) return false; // work apps: normal launch
+        try {
+            android.content.Intent i = new android.content.Intent(android.content.Intent.ACTION_MAIN)
+                    .addCategory(android.content.Intent.CATEGORY_LAUNCHER).setComponent(a.component)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                            | android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+            ctx.startActivity(i);
+            usage.edit().putInt(a.key, usage.getInt(a.key, 0) + 1).apply();
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
     public void launch(AppInfo a, View from) {
+        if (adjacent && launchAdjacent(a)) return;
         usage.edit().putInt(a.key, usage.getInt(a.key, 0) + 1).apply();
         Rect bounds = null;
         Bundle opts = null;

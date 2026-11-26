@@ -41,8 +41,8 @@ public final class Prefs {
     }
 
     // Home screen
-    public static int gridCols(Context c) { return sp(c).getInt("grid_cols", 5); }
-    public static int gridRows(Context c) { return sp(c).getInt("grid_rows", Ui.smallPhone(c) ? 5 : 6); }
+    public static int gridCols(Context c) { return sp(c).getInt("grid_cols", Ui.large(c) ? 6 : 5); }
+    public static int gridRows(Context c) { return sp(c).getInt("grid_rows", Ui.large(c) || Ui.smallPhone(c) ? 5 : 6); }
     public static boolean showLabels(Context c) { return sp(c).getBoolean("show_labels", true); }
     public static int iconScale(Context c) { return sp(c).getInt("icon_scale", 100); }
     public static boolean pageIndicator(Context c) { return sp(c).getBoolean("page_indicator", true); }
@@ -121,7 +121,14 @@ public final class Prefs {
     public static boolean widgetOverlap(Context c) { return sp(c).getBoolean("widget_overlap", false); }
     public static boolean drawerLabels(Context c) { return sp(c).getBoolean("drawer_labels", true); }
     public static boolean drawerFrequent(Context c) { return sp(c).getBoolean("drawer_frequent", true); }
-    public static int drawerCols(Context c) { return sp(c).getInt("drawer_cols", 5); }
+    /** Drawer columns: one setting for phone-width windows, one for wide ones (tablet / unfolded / landscape). */
+    public static String drawerColsKey(Context c) { return Ui.wide(c) ? "drawer_cols_wide" : "drawer_cols"; }
+    public static int drawerCols(Context c) {
+        if (!Ui.wide(c)) return sp(c).getInt("drawer_cols", 5);
+        return sp(c).getInt("drawer_cols_wide", Math.max(6, Math.min(10, Math.round(Ui.widthDp(c) / 105f))));
+    }
+    /** Home screen rotation: on by default on tablets and foldables. */
+    public static boolean allowRotation(Context c) { return sp(c).getBoolean("allow_rotation", Ui.large(c)); }
     public static int drawerOpacity(Context c) { return sp(c).getInt("drawer_opacity", 92); }
     public static String drawerSort(Context c) { return sp(c).getString("drawer_sort", "az"); }
     /** The A–Z wave scroller beside the drawer. */

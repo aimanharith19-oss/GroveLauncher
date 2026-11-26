@@ -341,8 +341,10 @@ public class DrawerView extends FrameLayout {
         lastTop = top;
         int h = Ui.dp(getContext(), 6);
         content.setPadding(0, 0, 0, 0);
-        acrylic.setPadding(h, top + Ui.dp(getContext(), 8), h, Ui.dp(getContext(), 4));
-        scrollContent.setPadding(h, 0, h, 0);
+        // big screens: the search bar and tabs keep a comfortable width, the app grid uses the room (more columns, a margin)
+        int hs = h + Ui.sideFor(getContext(), 720), hg = Ui.wide(getContext()) ? h + Ui.sideFor(getContext(), 1200) + Ui.dp(getContext(), 12) : h;
+        acrylic.setPadding(hs, top + Ui.dp(getContext(), 8), hs, Ui.dp(getContext(), 4));
+        scrollContent.setPadding(hg, 0, hg, 0);
         grid.setPadding(0, Ui.dp(getContext(), 6), gridRightPad(), bottom + Ui.dp(getContext(), 8));
         applyListPadding();
         ((LayoutParams) selectBar.getLayoutParams()).bottomMargin = bottom + Ui.dp(getContext(), 16);
@@ -1332,10 +1334,10 @@ public class DrawerView extends FrameLayout {
             total *= d.getScaleFactor();
             int cols = cols();
             int next = total > 1.25f ? cols - 1 : total < 0.8f ? cols + 1 : cols;
-            next = Math.max(3, Math.min(8, next));
+            next = Math.max(3, Math.min(Ui.wide(getContext()) ? 12 : 8, next));
             if (next != cols) {
                 total = 1f;
-                Prefs.sp(getContext()).edit().putInt("drawer_cols", next).apply();
+                Prefs.sp(getContext()).edit().putInt(Prefs.drawerColsKey(getContext()), next).apply();
                 refresh();
                 if (Anim.haptics(getContext())) performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
             }

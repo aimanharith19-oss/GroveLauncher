@@ -385,7 +385,7 @@ public class SettingsActivity extends Activity {
         String[] pageKeys = new String[pages], pageLabels = new String[pages];
         for (int i = 0; i < pages; i++) { pageKeys[i] = String.valueOf(i); pageLabels[i] = "Page " + (i + 1); }
         intChoice("Main home page (Home button returns here)", "main_page", pageLabels, 0);
-        toggle("Allow home screen rotation", "allow_rotation", false);
+        toggle("Allow home screen rotation", "allow_rotation", Ui.large(this));
         slider("Grid columns", "grid_cols", 2, 12, 5, "");
         slider("Grid rows", "grid_rows", 2, 12, 6, "");
         slider("Icon size", "icon_scale", 60, 140, 100, "%");
