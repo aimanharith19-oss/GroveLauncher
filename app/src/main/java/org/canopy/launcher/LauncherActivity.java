@@ -133,6 +133,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         else if (android.os.Build.VERSION.SDK_INT >= 28) getWindow().getAttributes().layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         lastWDp = getResources().getConfiguration().screenWidthDp;
         lastHDp = getResources().getConfiguration().screenHeightDp;
+        lastLarge = getResources().getConfiguration().smallestScreenWidthDp >= 600;
         if (!Prefs.allowRotation(this)) {
             setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
@@ -263,13 +264,22 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
      *  (grid, drawer columns, two-column feed, centred dock). Not while a video plays full screen. */
     @Override public void onConfigurationChanged(android.content.res.Configuration cfg) {
         super.onConfigurationChanged(cfg);
-        if (cfg.screenWidthDp == lastWDp && cfg.screenHeightDp == lastHDp) return;
-        lastWDp = cfg.screenWidthDp;
-        lastHDp = cfg.screenHeightDp;
+        // Only a real change of shape rebuilds: phone <-> wide (unfold / fold / split screen) or a rotation while rotation is on.
+        // (1.60 rebuilt on every size report; some phones send those while Recents is open, which left the home screen blank.)
+        int w = cfg.screenWidthDp, h = cfg.screenHeightDp;
+        boolean bucketChanged = (w >= 600) != (lastWDp >= 600) || (cfg.smallestScreenWidthDp >= 600) != lastLarge;
+        boolean rotated = Prefs.allowRotation(this) && (w > h) != (lastWDp > lastHDp);
+        lastWDp = w;
+        lastHDp = h;
+        lastLarge = cfg.smallestScreenWidthDp >= 600;
+        if (!bucketChanged && !rotated) return;
+        if (android.os.SystemClock.uptimeMillis() - createdAt < 1500) return; // settling right after (re)creation
         if (videoDialog != null) { pendingRelayout = true; return; }
         Ui.clearPaletteCache();
-        root.post(new Runnable() { @Override public void run() { if (!isFinishing()) recreate(); } });
+        root.post(new Runnable() { @Override public void run() { if (!isFinishing() && !isDestroyed()) recreate(); } });
     }
+    private boolean lastLarge;
+    private final long createdAt = android.os.SystemClock.uptimeMillis();
 
     /** Split screen: the home screen in the other half becomes an app picker, and apps open in that half. */
     @Override public void onMultiWindowModeChanged(boolean inMw, android.content.res.Configuration cfg) {
