@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.63.0
+- **App drawer background**: Settings > App drawer > *Background*: Material You (default) or *Same as the feed* (dark blur, white blur, a plain colour or Material You — whatever the feed uses; it changes with it). *Background opacity* now goes all the way down to 0% for a see-through drawer over the blurred wallpaper. Text and labels switch to light or dark so they stay readable on the chosen background.
+
 ### What's new in 1.62.1
 - **Drawer tabs sized to the screen**: tab text, padding and height scale with the screen width (smaller on compact phones, bigger on large phones, foldables and tablets), and when all tabs fit they share the strip's width equally, spanning the screen like a segmented bar.
 

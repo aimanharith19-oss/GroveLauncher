@@ -633,6 +633,8 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             lastWindowBlur = -1;
             applyDepth();
             if (feed != null) feed.refresh();
+            // a drawer set to "Same as the feed" is rebuilt with the new background
+            if ("feed".equals(Prefs.sp(this).getString("drawer_bg", "you"))) { Ui.clearPaletteCache(); if (resumed) recreate(); else needsRecreate = true; }
             return;
         }
         // written by feed cards (DNS, history…): read live, never rebuild the screen for them

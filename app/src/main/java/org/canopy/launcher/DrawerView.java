@@ -98,9 +98,9 @@ public class DrawerView extends FrameLayout {
     public DrawerView(LauncherActivity c) {
         super(c);
         launcher = c;
-        pal = Ui.palette(c);
+        pal = Ui.drawerPalette(c);
         slop = ViewConfiguration.get(c).getScaledTouchSlop();
-        setBackgroundColor(Ui.alpha(pal.bg, Math.round(Prefs.drawerOpacity(c) * 2.55f)));
+        setBackgroundColor(Ui.alpha(Ui.drawerBg(c), Math.round(Prefs.drawerOpacity(c) * 2.55f)));
 
         content = new LinearLayout(c);
         content.setOrientation(LinearLayout.VERTICAL);

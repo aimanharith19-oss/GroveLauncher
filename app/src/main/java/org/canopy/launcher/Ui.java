@@ -56,7 +56,7 @@ public final class Ui {
     private static int cachedUiMode = -1;
 
     /** Forget the cached palette (called whenever a setting changes). */
-    public static void clearPaletteCache() { cached = null; }
+    public static void clearPaletteCache() { cached = null; drawerPal = null; }
 
     /** The colours: built once and reused (it is asked for on every draw of some views); rebuilt when settings or dark mode change. */
     public static Palette palette(Context c) {
@@ -74,15 +74,56 @@ public final class Ui {
     }
 
     private static int cachedSys;
+
+    // ------------------------------------------------------------------ app drawer background (Settings > App drawer > Background)
+    private static Palette drawerPal;
+    private static int drawerBgCached;
+
+    /** What the drawer's background follows: "you" (Material You), or the feed's choice ("dark", "white", "color"). */
+    static String drawerBgMode(Context c) {
+        String m = Prefs.sp(c).getString("drawer_bg", "you");
+        if ("feed".equals(m)) {
+            String f = Prefs.feedBg(c);
+            m = "you".equals(f) ? "you" : f;
+        }
+        return m;
+    }
+
+    /** The drawer's background colour (before its opacity is applied). */
+    public static int drawerBg(Context c) {
+        String m = drawerBgMode(c);
+        if ("dark".equals(m)) return 0xFF0B0B0C;
+        if ("white".equals(m)) return 0xFFFFFFFF;
+        if ("color".equals(m)) return 0xFF000000 | Prefs.feedColor(c);
+        return palette(c).bg;
+    }
+
+    /** Text and card colours for the drawer, readable on its background (a dark drawer gets light text even in light mode). */
+    public static Palette drawerPalette(Context c) {
+        int bg = drawerBg(c);
+        Palette p = drawerPal;
+        if (p != null && drawerBgCached == bg) return p;
+        String m = drawerBgMode(c);
+        boolean night;
+        if ("you".equals(m)) night = night(c);
+        else if (Prefs.drawerOpacity(c) < 45 && !"white".equals(m)) night = true; // mostly see-through: the dimmed, blurred wallpaper decides
+        else night = !isLight(bg);
+        p = night == night(c) ? palette(c) : buildPalette(c, night);
+        drawerPal = p;
+        drawerBgCached = bg;
+        return p;
+    }
     /** One of the system's wallpaper-derived colours: when it differs, the cached palette is stale. */
     public static int systemTone(Context c) {
         if (android.os.Build.VERSION.SDK_INT < 31) return 0;
         try { return c.getApplicationContext().getColor(android.R.color.system_accent2_50) ^ c.getApplicationContext().getColor(android.R.color.system_accent1_500); } catch (Throwable t) { return 0; }
     }
 
-    private static Palette buildPalette(Context c) {
+    private static Palette buildPalette(Context c) { return buildPalette(c, night(c)); }
+
+    private static Palette buildPalette(Context c, boolean forceNight) {
         Palette p = new Palette();
-        p.night = night(c);
+        p.night = forceNight;
         if (p.night) {
             p.bg = 0xFF0F1412; p.surface = 0xFF19201C; p.surfaceAlt = 0xFF243029;
             p.text = 0xFFE8EFEA; p.subtext = 0xFF9DAEA4; p.divider = 0x22FFFFFF;

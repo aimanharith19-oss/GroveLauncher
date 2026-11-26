@@ -124,6 +124,10 @@ public class IconView extends View {
         } else if (style == STYLE_FOLDER && Prefs.folderBgColor(c) != 0) {
             tp.setColor(Ui.textOn(Prefs.folderBgColor(c)));
             folderPaint.setColor(pal.surfaceAlt);
+        } else if (style == STYLE_DRAWER) {
+            Ui.Palette dp = Ui.drawerPalette(c); // readable on the drawer's own background
+            tp.setColor(dp.text);
+            folderPaint.setColor(dp.surfaceAlt);
         } else {
             tp.setColor(pal.text);
             folderPaint.setColor(pal.surfaceAlt);

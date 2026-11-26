@@ -425,7 +425,9 @@ public class SettingsActivity extends Activity {
         TextView drawerTip = Ui.text(this, "Tip: pinch inside the app drawer to change the number of columns.", 13, pal.subtext);
         drawerTip.setPadding(Ui.dp(this, 8), Ui.dp(this, 6), Ui.dp(this, 8), 0);
         list.addView(drawerTip);
-        slider("Background opacity", "drawer_opacity", 40, 100, 92, "%");
+        choice("Background", "drawer_bg", new String[]{"you", "feed"},
+                new String[]{"Material You (wallpaper colours)", "Same as the feed"}, "you");
+        slider("Background opacity (lower = more see-through)", "drawer_opacity", 0, 100, 92, "%");
         choice("Sort apps", "drawer_sort", new String[]{"az", "usage", "installed"},
                 new String[]{"Alphabetical", "Most used first", "Newest installed first"}, "az");
         toggle("Lock drawer layout (long-press shows only shortcuts & widgets)", "drawer_locked", false);
