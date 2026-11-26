@@ -1190,12 +1190,7 @@ public class FeedPage extends LinearLayout {
         LinearLayout.LayoutParams elp = new LinearLayout.LayoutParams(-2, -2);
         elp.leftMargin = Ui.dp(c, 10);
         actions.addView(edit, elp);
-        TextView bg = Ui.button(c, "Background", Ui.alpha(surf, 0xEB), pal.text);
-        bg.setTextSize(14);
-        bg.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { FeedBackground.choose(getContext()); } });
-        LinearLayout.LayoutParams bglp = new LinearLayout.LayoutParams(-2, -2);
-        bglp.leftMargin = Ui.dp(c, 10);
-        actions.addView(bg, bglp);
+        // (the feed background is chosen in Settings > Feed > Background)
         cards.addView(actions);
 
         // tabs + the open web page (re-attached after a rebuild, without reloading it)

@@ -63,7 +63,7 @@ final class PillStrip extends LinearLayout {
         from.set(cur);
         endRect.set(to);
         anim = ValueAnimator.ofFloat(0f, 1f);
-        anim.setDuration(Anim.dur(getContext(), 320));
+        anim.setDuration(Anim.dur(getContext(), 560)); // slow and smooth, like YouTube's
         anim.setInterpolator(Anim.calm(getContext()) || Anim.fluid(getContext()) ? Anim.open(getContext()) : Anim.gentle(getContext()));
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override public void onAnimationUpdate(ValueAnimator v) {
