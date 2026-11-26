@@ -285,6 +285,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     @Override public void onMultiWindowModeChanged(boolean inMw, android.content.res.Configuration cfg) {
         super.onMultiWindowModeChanged(inMw, cfg);
         repo.adjacent = inMw;
+        mwBackground(inMw);
         if (inMw && drawer != null && !drawer.isOpen() && !mwPickerShown) {
             mwPickerShown = true;
             root.post(new Runnable() {
@@ -470,9 +471,19 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
 
     private boolean mwPickerShown;
 
+    /** In split screen Android doesn't draw the wallpaper behind the home screen, which left an empty dark half:
+     *  give the window a solid Material You background there instead. */
+    private void mwBackground(boolean inMw) {
+        try {
+            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(inMw ? Ui.palette(this).bg : 0x00000000));
+            if (inMw && drawer != null && !drawer.isOpen()) drawer.open(false);
+        } catch (Throwable ignored) { }
+    }
+
     @Override protected void onResume() {
         // split screen (also after the window was rebuilt for its new size): open the app list once as a picker
         repo.adjacent = isInMultiWindowMode();
+        mwBackground(repo.adjacent);
         if (repo.adjacent && !mwPickerShown && drawer != null) {
             mwPickerShown = true;
             root.post(new Runnable() { @Override public void run() { if (isInMultiWindowMode() && !drawer.isOpen()) drawer.open(false); } });

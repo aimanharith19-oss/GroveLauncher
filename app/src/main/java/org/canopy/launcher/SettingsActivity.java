@@ -83,7 +83,9 @@ public class SettingsActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Ui.alpha(pal.bg, blur ? 0xB0 : 0xE0));
+        // in split screen there's no wallpaper behind the window: solid, so the page never looks like an empty dark half
+        root.setBackgroundColor(isInMultiWindowMode() ? (0xFF000000 | pal.bg) : Ui.alpha(pal.bg, blur ? 0xB0 : 0xE0));
+        if (isInMultiWindowMode()) getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0xFF000000 | pal.bg));
 
         LinearLayout bar = new LinearLayout(this);
         bar.setGravity(Gravity.CENTER_VERTICAL);
@@ -645,6 +647,11 @@ public class SettingsActivity extends Activity {
         h.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         h.setPadding(Ui.dp(this, 8), Ui.dp(this, 22), 0, Ui.dp(this, 6));
         list.addView(h);
+    }
+
+    @Override public void onMultiWindowModeChanged(boolean inMw, android.content.res.Configuration cfg) {
+        super.onMultiWindowModeChanged(inMw, cfg);
+        recreate(); // re-draw with (or without) the solid split-screen background
     }
 
     private boolean openedByInstaller() {

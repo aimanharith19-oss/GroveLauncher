@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.61.2
+- **Split screen: no more empty dark half**. Android doesn't draw the wallpaper behind apps in split screen, so Grove (home screen or settings) showed as a blank dark half. In split screen they now get a solid Material You background, and the home screen opens its app list so you can pick the second app.
+
 ### What's new in 1.61.1
 - **Blank home screen after Recents fixed**: 1.60 rebuilt the home screen on every window-size report, and some phones send those while Recents is open, so it kept rebuilding and showed only the wallpaper. Now it rebuilds only for a real change of shape (fold / unfold, split screen, or a rotation with rotation turned on).
 
