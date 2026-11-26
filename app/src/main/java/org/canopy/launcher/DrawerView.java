@@ -695,6 +695,7 @@ public class DrawerView extends FrameLayout {
         if (work) { addChip(tabName("personal", "Personal"), "personal", null); addChip(tabName("work", "Work"), "work", null); }
         for (DrawerGroups.Group g : tabs) addChip(g.name, "t" + g.id, g);
         ((PillStrip) tabBar).select(chipFor(tab));
+        tabScroll.post(new Runnable() { @Override public void run() { fillTabs(); } });
     }
 
     private View chipFor(String key) {
@@ -706,15 +707,16 @@ public class DrawerView extends FrameLayout {
         Context c = getContext();
         boolean on = key.equals(tab);
         // Natural, easy-to-hit tabs: the current one is a soft accent pill with bold text, the others plain text.
-        boolean small = Ui.smallPhone(c);
-        TextView t = Ui.text(c, name, small ? 14 : 15, on ? pal.accent : pal.subtext);
+        // sized to the screen: text, padding and height grow on bigger screens and shrink a little on small ones
+        float k = tabScale(c);
+        TextView t = Ui.text(c, name, 15 * k, on ? pal.accent : pal.subtext);
         // the same weight for every tab (the pill and colour mark the current one), so choosing a tab never changes the widths and the strip doesn't shift
         t.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
         t.setSingleLine(true);
         t.setGravity(Gravity.CENTER);
-        t.setMinWidth(Ui.dp(c, small ? 52 : 64));
-        t.setPadding(Ui.dp(c, small ? 14 : 18), Ui.dp(c, 9), Ui.dp(c, small ? 14 : 18), Ui.dp(c, 9));
-        t.setBackground(Ui.pressable(c, 0x00000000, Ui.dp(c, 20)));
+        t.setMinWidth(Ui.dp(c, 60 * k));
+        t.setPadding(Ui.dp(c, 16 * k), Ui.dp(c, 9 * k), Ui.dp(c, 16 * k), Ui.dp(c, 9 * k));
+        t.setBackground(Ui.pressable(c, 0x00000000, Ui.dp(c, 20 * k)));
         t.setOnClickListener(new OnClickListener() {
             @Override public void onClick(View v) {
                 if (key.equals(tab)) return;
@@ -732,6 +734,36 @@ public class DrawerView extends FrameLayout {
         lp.leftMargin = lp.rightMargin = Ui.dp(c, 3);
         tabBar.addView(t, lp);
         if (on) revealTab = t;
+    }
+
+    /** Tab size follows the screen: 1.0 on a typical ~400 dp-wide phone, smaller below, larger on big screens. */
+    private static float tabScale(Context c) {
+        float k = Ui.widthDp(c) / 400f;
+        return Math.max(0.88f, Math.min(1.3f, k));
+    }
+
+    /** When the tabs fit, they share the strip's width equally (so they span the screen like a segmented bar). */
+    private void fillTabs() {
+        int vw = tabScroll.getWidth() - tabBar.getPaddingLeft() - tabBar.getPaddingRight();
+        int n = 0, natural = 0;
+        for (int i = 0; i < tabBar.getChildCount(); i++) {
+            View v = tabBar.getChildAt(i);
+            if (!(v instanceof TextView) || v.getVisibility() != VISIBLE) continue;
+            LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) v.getLayoutParams();
+            v.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+            natural += v.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
+            n++;
+        }
+        if (vw <= 0 || n == 0) return;
+        int each = vw / n;
+        boolean fits = natural <= vw;
+        for (int i = 0; i < tabBar.getChildCount(); i++) {
+            View v = tabBar.getChildAt(i);
+            if (!(v instanceof TextView) || v.getVisibility() != VISIBLE) continue;
+            LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) v.getLayoutParams();
+            int w = fits ? Math.max(v.getMeasuredWidth(), each - lp.leftMargin - lp.rightMargin) : -2;
+            if (lp.width != w) { lp.width = w; v.setLayoutParams(lp); }
+        }
     }
 
     private String tabName(String key, String def) {
