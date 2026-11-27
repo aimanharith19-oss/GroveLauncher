@@ -33,6 +33,8 @@ public final class Anim {
     // Material 3 easing curves
     static final Interpolator EMPHASIZED_DECEL = new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f);
     static final Interpolator STANDARD = new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f);
+    /** Ease in and out: starts gently, glides, settles gently (no sudden jump at the start). */
+    static final Interpolator EASE_IN_OUT = new android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f);
     static final Interpolator EMPHASIZED_ACCEL = new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f);
     public static boolean minimal(Context c) { return "minimal".equals(style(c)); }
 

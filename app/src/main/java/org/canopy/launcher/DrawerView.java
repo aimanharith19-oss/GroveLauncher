@@ -1404,8 +1404,8 @@ public class DrawerView extends FrameLayout {
         if (fromChip instanceof TextView && fromChip != toChip) ((TextView) fromChip).setTextColor(pal.subtext);
         android.graphics.Bitmap pic = snaps.get(key);
         // an even, unhurried glide for whatever distance is left (no fast snap, no overshoot)
-        long ms = Anim.dur(getContext(), Math.max(300, Math.round(460 * (1f - Math.min(0.6f, done)))));
-        final android.animation.TimeInterpolator ease = Anim.STANDARD;
+        long ms = Anim.dur(getContext(), Math.max(380, Math.round(520 * (1f - Math.min(0.5f, done)))));
+        final android.animation.TimeInterpolator ease = Anim.EASE_IN_OUT;
         if (pic != null) {
             peek.setImageBitmap(pic);
             peek.setVisibility(VISIBLE);
@@ -1427,7 +1427,7 @@ public class DrawerView extends FrameLayout {
                             // no picture of that tab yet: a gentle cross-fade rather than a second slide (that read as a bounce)
                             box.setTranslationX(dir * w * 0.12f);
                             box.setAlpha(0f);
-                            box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 280)).setInterpolator(ease).start();
+                            box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 360)).setInterpolator(ease).start();
                         }
                         acrylic.invalidate();
                         snapLater();
@@ -1437,10 +1437,10 @@ public class DrawerView extends FrameLayout {
 
     private void settleBack() {
         final float w = Math.max(1, box.getWidth());
-        long ms = Anim.dur(getContext(), 340);
-        box.animate().translationX(0).alpha(1f).setDuration(ms).setInterpolator(Anim.STANDARD).start();
+        long ms = Anim.dur(getContext(), 380);
+        box.animate().translationX(0).alpha(1f).setDuration(ms).setInterpolator(Anim.EASE_IN_OUT).start();
         if (peek.getVisibility() == VISIBLE)
-            peek.animate().translationX(swipeDir * w).setDuration(ms).setInterpolator(Anim.STANDARD)
+            peek.animate().translationX(swipeDir * w).setDuration(ms).setInterpolator(Anim.EASE_IN_OUT)
                     .withEndAction(new Runnable() { @Override public void run() { peek.setVisibility(GONE); peek.setImageBitmap(null); } }).start();
         ((PillStrip) tabBar).endDrag();
     }
