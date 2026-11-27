@@ -307,7 +307,8 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         // Web tabs stay loaded while you're in other apps; after a short while (Settings) their scripts are
         // frozen to save battery — except one playing video/audio, or the pop-up player.
         scheduleWebSleep();
-        android.webkit.CookieManager.getInstance().flush();
+        // saving cookies took ~230 ms on the main thread when leaving the home screen
+        App.IO.execute(new Runnable() { @Override public void run() { try { android.webkit.CookieManager.getInstance().flush(); } catch (Throwable ignored) { } } });
     }
 
     private boolean isPlaying(String id) { return WebMedia.isPlaying(id); }

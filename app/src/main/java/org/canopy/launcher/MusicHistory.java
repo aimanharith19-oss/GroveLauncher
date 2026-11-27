@@ -102,16 +102,48 @@ public final class MusicHistory {
         if (list != null) for (final MediaController c : list) {
             if (app != null && app.getPackageName().equals(c.getPackageName())) continue; // Canopy's own web tabs
             MediaController.Callback cb = new MediaController.Callback() {
-                @Override public void onPlaybackStateChanged(PlaybackState s) { update(); }
-                @Override public void onMetadataChanged(MediaMetadata m) { update(); }
-                @Override public void onSessionDestroyed() { update(); }
+                // the callbacks hand us the new state: kept, so nothing asks the player again on the main thread
+                @Override public void onPlaybackStateChanged(PlaybackState s) { if (s != null) STATES.put(c, s); else STATES.remove(c); update(); }
+                @Override public void onMetadataChanged(MediaMetadata m) { if (m != null) METAS.put(c, m); else METAS.remove(c); update(); }
+                @Override public void onAudioInfoChanged(MediaController.PlaybackInfo pi) { TYPES.put(c, typeOf(pi)); update(); }
+                @Override public void onSessionDestroyed() { STATES.remove(c); METAS.remove(c); update(); }
             };
             try { c.registerCallback(cb, H); } catch (Throwable t) { continue; }
             callbacks.put(c, cb);
             controllers.add(c);
         }
+        STATES.keySet().retainAll(controllers);
+        METAS.keySet().retainAll(controllers);
+        TYPES.keySet().retainAll(controllers);
+        // first look at each player off the main thread (each question to a player app can take 100 ms - 1.5 s)
+        final List<MediaController> snap = new ArrayList<>(controllers);
+        App.IO.execute(new Runnable() {
+            @Override public void run() {
+                for (MediaController c : snap) {
+                    try {
+                        PlaybackState s = c.getPlaybackState(); if (s != null) STATES.put(c, s);
+                        MediaMetadata m = c.getMetadata(); if (m != null) METAS.put(c, m);
+                        TYPES.put(c, typeOf(c.getPlaybackInfo()));
+                    } catch (Throwable ignored) { }
+                }
+                H.post(new Runnable() { @Override public void run() { update(); } });
+            }
+        });
         update();
     }
+
+    private static final Map<MediaController, PlaybackState> STATES = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<MediaController, MediaMetadata> METAS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<MediaController, Integer> TYPES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static int typeOf(MediaController.PlaybackInfo pi) {
+        try { if (pi != null && pi.getAudioAttributes() != null) return pi.getAudioAttributes().getContentType(); } catch (Throwable ignored) { }
+        return -1;
+    }
+
+    /** The player's last known state / song (never asks the player app, so it is instant). */
+    public static PlaybackState stateOf(MediaController c) { return c == null ? null : STATES.get(c); }
+    public static MediaMetadata metaOf(MediaController c) { return c == null ? null : METAS.get(c); }
 
     // ------------------------------------------------------------------ music only, no video
 
@@ -148,16 +180,13 @@ public final class MusicHistory {
     private static boolean isMusic(MediaController c) {
         String pkg = c.getPackageName();
         if (isVideoApp(pkg)) return false;
-        int type = -1;
-        try {
-            MediaController.PlaybackInfo pi = c.getPlaybackInfo();
-            if (pi != null && pi.getAudioAttributes() != null) type = pi.getAudioAttributes().getContentType();
-        } catch (Throwable ignored) { }
+        Integer t = TYPES.get(c);
+        int type = t == null ? -1 : t;
         if (type == android.media.AudioAttributes.CONTENT_TYPE_MOVIE) return false;
         if (MUSIC.contains(pkg)) return true;
         if (type == android.media.AudioAttributes.CONTENT_TYPE_MUSIC) return true;
         // other apps: only songs that name an artist and look like a song length (not a long video)
-        MediaMetadata m = c.getMetadata();
+        MediaMetadata m = METAS.get(c);
         if (m == null) return false;
         String a = artist(m);
         long dur = m.getLong(MediaMetadata.METADATA_KEY_DURATION);
@@ -165,12 +194,12 @@ public final class MusicHistory {
     }
 
     private static boolean playing(MediaController c) {
-        PlaybackState s = c.getPlaybackState();
+        PlaybackState s = STATES.get(c);
         return s != null && s.getState() == PlaybackState.STATE_PLAYING;
     }
 
     private static String keyOf(MediaController c) {
-        MediaMetadata m = c.getMetadata();
+        MediaMetadata m = METAS.get(c);
         if (m == null) return null;
         String t = title(m), a = artist(m);
         if (t == null || t.trim().isEmpty()) return null;
@@ -192,8 +221,8 @@ public final class MusicHistory {
 
     private static void update() {
         MediaController pick = null;
-        for (MediaController c : controllers) if (playing(c) && c.getMetadata() != null && isMusic(c)) { pick = c; break; }
-        if (pick == null) for (MediaController c : controllers) if (c.getMetadata() != null && isMusic(c)) { pick = c; break; }
+        for (MediaController c : controllers) if (playing(c) && METAS.get(c) != null && isMusic(c)) { pick = c; break; }
+        if (pick == null) for (MediaController c : controllers) if (METAS.get(c) != null && isMusic(c)) { pick = c; break; }
         current = pick;
         String k = pick != null && playing(pick) ? keyOf(pick) : null;
         if (k == null) { H.removeCallbacks(COUNT); candidate = null; }
@@ -242,8 +271,13 @@ public final class MusicHistory {
         load();
     }
 
+    private static int version;
+    /** Changes whenever the play history changes (a song counted, history cleared or loaded). */
+    public static int signature() { return version + tracks.size() * 1000; }
+
     private static void record(MediaController c) {
-        MediaMetadata m = c.getMetadata();
+        version++;
+        MediaMetadata m = METAS.get(c);
         String k = keyOf(c);
         if (m == null || k == null) return;
         Track t = tracks.remove(k);
@@ -284,6 +318,7 @@ public final class MusicHistory {
     }
 
     public static void clear(Context c) {
+        version++;
         tracks.clear();
         lastCounted = null;
         //noinspection ResultOfMethodCallIgnored

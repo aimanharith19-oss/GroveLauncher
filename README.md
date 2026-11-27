@@ -28,6 +28,11 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.63.3
+- **No more freezes from music (lag report)**: the launcher asked the playing app about its song, play state and audio type on the main thread whenever anything changed — on this phone a single question took up to 1.5 s. It now keeps what the player tells it in its own notifications and asks only once, off the main thread.
+- The feed's music and notification cards are rebuilt only while they're on screen and only when something actually changed (each rebuild cost 100–400 ms), and notification icons are drawn once as small pictures.
+- Saving web cookies when you leave the home screen runs in the background (was ~230 ms).
+
 ### What's new in 1.63.2
 - **Smoother (from the lag report)**: most remaining stutters were frames waiting 100–570 ms on the graphics chip, caused by the launcher blurring the home screen's icons, dock and search bar itself (and redoing the dock / search-bar blur on every frame while the feed slid in). That extra blur is now off by default; the wallpaper is still blurred by Android's own window blur, which costs the launcher nothing. Turn it back on in Settings > *Also blur the home screen icons*.
 - The first web tab no longer freezes the screen while Android loads its web engine: it is loaded once, early, when the phone is idle.

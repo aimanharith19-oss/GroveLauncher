@@ -1744,7 +1744,7 @@ public class FeedPage extends LinearLayout {
             @Override public void onGlobalLayout() { if (Boolean.TRUE.equals(col.getTag(R.id.notif_dirty)) && notifsVisible(col)) refillNotifs(col); }
         });
         col.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
-            @Override public void onViewAttachedToWindow(View v) { NotifHistory.addListener(l); fillNotifs(col); }
+            @Override public void onViewAttachedToWindow(View v) { NotifHistory.addListener(l); refillNotifs(col); }
             @Override public void onViewDetachedFromWindow(View v) { NotifHistory.removeListener(l); }
         });
         fillNotifs(col);
@@ -1771,13 +1771,33 @@ public class FeedPage extends LinearLayout {
         if (cs == null) {
             try {
                 android.graphics.drawable.Drawable d = c.getPackageManager().getApplicationIcon(pkg);
-                cs = d.getConstantState();
+                // drawn once into a small picture: adaptive icons redraw their vector layers on every frame otherwise
+                int px = Ui.dp(c, 32);
+                android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(px, px, android.graphics.Bitmap.Config.ARGB_8888);
+                android.graphics.Canvas cv = new android.graphics.Canvas(b);
+                d.setBounds(0, 0, px, px);
+                d.draw(cv);
+                cs = new android.graphics.drawable.BitmapDrawable(c.getResources(), b).getConstantState();
                 if (cs == null) return d;
                 if (ICONS.size() > 80) ICONS.clear();
                 ICONS.put(pkg, cs);
             } catch (Exception e) { return null; }
         }
         return cs.newDrawable(c.getResources());
+    }
+
+    /** The music card is rebuilt only while it's on screen and only when the song, play state or history changed. */
+    private void refillMusic(LinearLayout col) {
+        if (!notifsVisible(col)) { col.setTag(R.id.notif_dirty, Boolean.TRUE); return; }
+        col.setTag(R.id.notif_dirty, null);
+        android.media.session.MediaController mc = MusicHistory.current();
+        android.media.MediaMetadata md = MusicHistory.metaOf(mc);
+        android.media.session.PlaybackState ps = MusicHistory.stateOf(mc);
+        String sig = (mc == null ? "" : mc.getPackageName()) + "|" + (md == null ? "" : MusicHistory.title(md) + MusicHistory.artist(md))
+                + "|" + (ps == null ? -1 : ps.getState()) + "|" + MusicHistory.signature();
+        if (sig.equals(col.getTag(R.id.notif_sig))) return;
+        col.setTag(R.id.notif_sig, sig);
+        fillMusic(col);
     }
 
     /** Compact: one icon per app (newest first) with how many it sent; tap to read them in full. */
@@ -2451,10 +2471,13 @@ public class FeedPage extends LinearLayout {
         final LinearLayout col = new LinearLayout(c);
         col.setOrientation(VERTICAL);
         final MusicHistory.Listener l = new MusicHistory.Listener() {
-            @Override public void onMusicChanged() { fillMusic(col); }
+            @Override public void onMusicChanged() { refillMusic(col); }
         };
+        col.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override public void onGlobalLayout() { if (Boolean.TRUE.equals(col.getTag(R.id.notif_dirty)) && notifsVisible(col)) refillMusic(col); }
+        });
         col.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
-            @Override public void onViewAttachedToWindow(View v) { MusicHistory.addListener(l); fillMusic(col); }
+            @Override public void onViewAttachedToWindow(View v) { MusicHistory.addListener(l); refillMusic(col); }
             @Override public void onViewDetachedFromWindow(View v) { MusicHistory.removeListener(l); }
         });
         fillMusic(col);
@@ -2486,7 +2509,7 @@ public class FeedPage extends LinearLayout {
         }
         // ---- now playing
         final android.media.session.MediaController mc = MusicHistory.current();
-        android.media.MediaMetadata md = mc == null ? null : mc.getMetadata();
+        android.media.MediaMetadata md = MusicHistory.metaOf(mc); // cached: asking the player app could block for a second
         if (md != null && MusicHistory.title(md) != null) {
             LinearLayout row = new LinearLayout(c);
             row.setGravity(Gravity.CENTER_VERTICAL);
@@ -2517,7 +2540,7 @@ public class FeedPage extends LinearLayout {
             sub.setEllipsize(TextUtils.TruncateAt.END);
             info.addView(sub);
             row.addView(info, new LinearLayout.LayoutParams(0, -2, 1));
-            android.media.session.PlaybackState ps = mc.getPlaybackState();
+            android.media.session.PlaybackState ps = MusicHistory.stateOf(mc);
             final boolean isPlaying = ps != null && ps.getState() == android.media.session.PlaybackState.STATE_PLAYING;
             row.addView(control("⏮", new Runnable() { @Override public void run() { mc.getTransportControls().skipToPrevious(); } }));
             row.addView(control(isPlaying ? "⏸" : "▶", new Runnable() {
