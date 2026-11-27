@@ -683,9 +683,16 @@ public class FeedPage extends LinearLayout {
             in = webPane;
         }
         float w = Math.max(1, getWidth());
-        in.setTranslationX(dir * w * 0.35f);
-        in.setAlpha(0f);
-        in.animate().translationX(0).alpha(1f).setDuration(Anim.dur(c, 260)).setInterpolator(Anim.open(c)).start();
+        if (in == cardsScroll) {
+            in.setTranslationX(dir * w * 0.35f);
+            in.setAlpha(0f);
+            in.animate().translationX(0).alpha(1f).setDuration(Anim.dur(c, 260)).setInterpolator(Anim.open(c)).start();
+        } else {
+            // a web page is shown at once: fading / sliding a WebView made it draw blank for seconds on some phones
+            in.animate().cancel();
+            in.setTranslationX(0);
+            in.setAlpha(1f);
+        }
         // keep the selected tab in view
         final View sel = tabBar.getChildAt(Math.max(0, "feed".equals(id) ? 0 : FeedWeb.tabs(c).indexOf(id) + 1));
         if (sel != null) post(new Runnable() { @Override public void run() { tabScroll.smoothScrollTo(Math.max(0, sel.getLeft() - Ui.dp(getContext(), 40)), 0); } });
@@ -771,6 +778,7 @@ public class FeedPage extends LinearLayout {
         LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(-1, 0, 1);
         flp.setMargins(Ui.dp(c, 6), 0, Ui.dp(c, 6), Ui.dp(c, 6));
         webPane.addView(frame, flp);
+        launcher.showingWeb(wv);
     }
 
     /** Pull down at the top of a page to reload it: a round arrow follows your finger, then spins while loading. */

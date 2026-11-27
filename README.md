@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.63.4
+- **Feed web tabs no longer go blank when you switch between them**: the slide-and-fade added in 1.59 made the page (a WebView) draw blank for seconds on some phones. Web pages now appear at once (the feed cards still slide in), and a page put back on screen is woken up and repainted.
+
 ### What's new in 1.63.3
 - **No more freezes from music (lag report)**: the launcher asked the playing app about its song, play state and audio type on the main thread whenever anything changed — on this phone a single question took up to 1.5 s. It now keeps what the player tells it in its own notifications and asks only once, off the main thread.
 - The feed's music and notification cards are rebuilt only while they're on screen and only when something actually changed (each rebuild cost 100–400 ms), and notification icons are drawn once as small pictures.

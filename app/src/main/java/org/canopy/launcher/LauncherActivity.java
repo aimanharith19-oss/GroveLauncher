@@ -237,6 +237,13 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         if (any != null && !spared) { any.pauseTimers(); webAsleep = true; }
     }
 
+    /** A web tab was just put on screen: make sure it is awake and repaints (a re-attached page could stay blank). */
+    void showingWeb(final android.webkit.WebView wv) {
+        if (webAsleep) wakeWeb();
+        try { wv.onResume(); } catch (Throwable ignored) { }
+        wv.post(new Runnable() { @Override public void run() { wv.invalidate(); wv.requestLayout(); } });
+    }
+
     private void wakeWeb() {
         root.removeCallbacks(sleepWebRunnable);
         android.webkit.WebView any = null;
