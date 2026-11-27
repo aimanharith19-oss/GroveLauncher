@@ -470,6 +470,24 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
     }
 
     private boolean mwPickerShown;
+    private boolean webWarmed;
+
+    /** The first web tab used to freeze the screen ~250 ms while Android loaded WebView: do it once, early, while idle. */
+    private void warmWebLater() {
+        if (webWarmed || FeedWeb.tabs(this).isEmpty()) return;
+        webWarmed = true;
+        root.postDelayed(new Runnable() {
+            @Override public void run() {
+                android.os.Looper.myQueue().addIdleHandler(new android.os.MessageQueue.IdleHandler() {
+                    @Override public boolean queueIdle() {
+                        if (overlayAnimating || stopped) return true; // wait for a quieter moment
+                        try { android.webkit.WebSettings.getDefaultUserAgent(LauncherActivity.this); } catch (Throwable ignored) { }
+                        return false;
+                    }
+                });
+            }
+        }, 4000);
+    }
 
     /** In split screen Android doesn't draw the wallpaper behind the home screen, which left an empty dark half:
      *  give the window a solid Material You background there instead. */
@@ -484,6 +502,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
         // split screen (also after the window was rebuilt for its new size): open the app list once as a picker
         repo.adjacent = isInMultiWindowMode();
         mwBackground(repo.adjacent);
+        warmWebLater();
         if (repo.adjacent && !mwPickerShown && drawer != null) {
             mwPickerShown = true;
             root.post(new Runnable() { @Override public void run() { if (isInMultiWindowMode() && !drawer.isOpen()) drawer.open(false); } });
@@ -1495,7 +1514,10 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             } catch (Throwable ignored) { }
         }
         // Blur the home screen itself behind the drawer / folders / widget page.
-        int vb = blurOn && !overlayAnimating ? Math.round(overlayAmt * 5f) * Ui.dp(this, 22) / 5 : 0; // stepped, so it isn't re-blurred every frame
+        // (off by default since 1.63.2: the lag report showed these GPU blurs stalling frames for 100-570 ms on MediaTek phones;
+        //  the wallpaper is still blurred by the system's window blur, which costs the launcher nothing)
+        boolean viewBlur = blurOn && Prefs.sp(this).getBoolean("home_blur", false);
+        int vb = viewBlur && !overlayAnimating ? Math.round(overlayAmt * 5f) * Ui.dp(this, 22) / 5 : 0; // stepped, so it isn't re-blurred every frame
         if (vb != lastViewBlur) {
             lastViewBlur = vb;
             android.graphics.RenderEffect fx = vb > 0
@@ -1504,7 +1526,7 @@ public class LauncherActivity extends Activity implements AppRepository.Listener
             dock.setRenderEffect(fx);
             searchPill.setRenderEffect(fx);
         }
-        int cb = blurOn ? Math.round(feedAmt * Ui.dp(this, 16)) : 0;
+        int cb = viewBlur && feedAmt >= 0.999f ? Ui.dp(this, 16) : 0; // never per frame
         if (cb != lastChromeBlur && overlayAmt == 0f) {
             lastChromeBlur = cb;
             android.graphics.RenderEffect fx = cb > 0

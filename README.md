@@ -28,6 +28,10 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.63.2
+- **Smoother (from the lag report)**: most remaining stutters were frames waiting 100–570 ms on the graphics chip, caused by the launcher blurring the home screen's icons, dock and search bar itself (and redoing the dock / search-bar blur on every frame while the feed slid in). That extra blur is now off by default; the wallpaper is still blurred by Android's own window blur, which costs the launcher nothing. Turn it back on in Settings > *Also blur the home screen icons*.
+- The first web tab no longer freezes the screen while Android loads its web engine: it is loaded once, early, when the phone is idle.
+
 ### What's new in 1.63.1
 - The tab pill (drawer and feed) glides more slowly (560 ms).
 - The *Background* button at the end of the feed is gone (choose it in Settings > Feed > Background).

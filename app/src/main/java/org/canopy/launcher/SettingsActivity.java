@@ -460,6 +460,7 @@ public class SettingsActivity extends Activity {
         header("Look & feel");
         if (android.os.Build.VERSION.SDK_INT >= 31) toggle("Material You colours (from wallpaper)", "dynamic_color", true);
         toggle("Blur & dim behind feed, drawer and folders", "depth_blur", true);
+        toggle("Also blur the home screen icons (heavy: can stutter on some phones)", "home_blur", false);
         choice("Home label colour", "label_color", new String[]{"auto", "light", "dark"}, new String[]{"Automatic (black on light wallpapers, white on dark)", "Always white", "Always black"}, "auto");
         toggle("Label shadow", "label_shadow", true);
         choice("Folder shape", "folder_shape", new String[]{"circle", "rounded", "square", "none"},
