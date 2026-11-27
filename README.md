@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.63.5
+- **Drawer tab swipe is calm**: the list now glides to the next tab evenly (300–460 ms) instead of snapping in ~120 ms, never overshoots, and a tab you haven't opened yet cross-fades in instead of sliding twice (which looked like a bounce). The pill uses the same even glide.
+
 ### What's new in 1.63.4
 - **Feed web tabs no longer go blank when you switch between them**: the slide-and-fade added in 1.59 made the page (a WebView) draw blank for seconds on some phones. Web pages now appear at once (the feed cards still slide in), and a page put back on screen is woken up and repainted.
 

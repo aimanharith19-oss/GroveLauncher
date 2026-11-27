@@ -1403,14 +1403,16 @@ public class DrawerView extends FrameLayout {
         if (toChip instanceof TextView) ((TextView) toChip).setTextColor(pal.accent);
         if (fromChip instanceof TextView && fromChip != toChip) ((TextView) fromChip).setTextColor(pal.subtext);
         android.graphics.Bitmap pic = snaps.get(key);
-        long ms = Anim.dur(getContext(), Math.max(120, Math.round(260 * (1f - Math.min(0.9f, done)))));
+        // an even, unhurried glide for whatever distance is left (no fast snap, no overshoot)
+        long ms = Anim.dur(getContext(), Math.max(300, Math.round(460 * (1f - Math.min(0.6f, done)))));
+        final android.animation.TimeInterpolator ease = Anim.STANDARD;
         if (pic != null) {
             peek.setImageBitmap(pic);
             peek.setVisibility(VISIBLE);
             peek.setTranslationX(box.getTranslationX() + dir * w);
-            peek.animate().translationX(0).setDuration(ms).setInterpolator(Anim.open(getContext())).start();
+            peek.animate().translationX(0).setDuration(ms).setInterpolator(ease).start();
         }
-        box.animate().translationX(-dir * w).alpha(pic != null ? 1f : 0f).setDuration(ms).setInterpolator(Anim.open(getContext()))
+        box.animate().translationX(-dir * w * (pic != null ? 1f : 0.25f)).alpha(pic != null ? 1f : 0f).setDuration(pic != null ? ms : ms / 2).setInterpolator(ease)
                 .withEndAction(new Runnable() {
                     @Override public void run() {
                         tab = key;
@@ -1422,9 +1424,10 @@ public class DrawerView extends FrameLayout {
                             peek.setVisibility(GONE);
                             peek.setImageBitmap(null);
                         } else {
-                            box.setTranslationX(dir * w * 0.3f);
+                            // no picture of that tab yet: a gentle cross-fade rather than a second slide (that read as a bounce)
+                            box.setTranslationX(dir * w * 0.12f);
                             box.setAlpha(0f);
-                            box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 220)).setInterpolator(Anim.open(getContext())).start();
+                            box.animate().translationX(0).alpha(1f).setDuration(Anim.dur(getContext(), 280)).setInterpolator(ease).start();
                         }
                         acrylic.invalidate();
                         snapLater();
@@ -1434,10 +1437,10 @@ public class DrawerView extends FrameLayout {
 
     private void settleBack() {
         final float w = Math.max(1, box.getWidth());
-        long ms = Anim.dur(getContext(), 240);
-        box.animate().translationX(0).alpha(1f).setDuration(ms).setInterpolator(Anim.gentle(getContext())).start();
+        long ms = Anim.dur(getContext(), 340);
+        box.animate().translationX(0).alpha(1f).setDuration(ms).setInterpolator(Anim.STANDARD).start();
         if (peek.getVisibility() == VISIBLE)
-            peek.animate().translationX(swipeDir * w).setDuration(ms).setInterpolator(Anim.gentle(getContext()))
+            peek.animate().translationX(swipeDir * w).setDuration(ms).setInterpolator(Anim.STANDARD)
                     .withEndAction(new Runnable() { @Override public void run() { peek.setVisibility(GONE); peek.setImageBitmap(null); } }).start();
         ((PillStrip) tabBar).endDrag();
     }
