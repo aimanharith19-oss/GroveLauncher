@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.65.0
+- **GroveMedia stats card** in the feed (needs the latest GroveMedia): your total time on music, videos, comics and books for today, this month, this year or all time, split in a bar, with plays / watched / chapters / books and the top song, video, comic and book. Tap it to open GroveMedia. Add or move it in Edit feed.
+
 ### What's new in 1.64.0
 - **Groveguard card shows what it blocked** (needs Groveguard 2.3+): DNS lookups blocked today (and out of how many, with the share and the all-time total), the 4 busiest block lists with bars, and the apps the firewall has cut off from the internet. Tap the numbers to open Groveguard on DNS protection, the block lists or the firewall. It updates by itself while the card is on screen.
 

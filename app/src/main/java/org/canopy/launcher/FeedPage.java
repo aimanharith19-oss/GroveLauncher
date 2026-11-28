@@ -68,9 +68,9 @@ import java.util.Map;
  * Cards can be reordered, hidden or removed ("Edit feed" or long-press a card's title).
  */
 public class FeedPage extends LinearLayout {
-    static final String[] BUILTIN = {"bookmarks", "music", "calendar", "tasks", "screentime", "apps", "notes", "device", "guard", "notifs", "dns"};
+    static final String[] BUILTIN = {"bookmarks", "music", "calendar", "tasks", "screentime", "apps", "notes", "device", "guard", "notifs", "dns", "media"};
     static final String[] BUILTIN_LABELS = {"Bookmarks", "Your music", "Agenda", "To-do", "Screen time today", "Most used", "Notes", "Device",
-            "Grove Guard", "Notification history", "Private DNS"};
+            "Grove Guard", "Notification history", "Private DNS", "GroveMedia stats"};
     private static final String[] SIZES = {"Small", "Medium", "Large", "Extra large"};
     private static final int[] SIZE_DP = {110, 180, 280, 400};
 
@@ -1176,6 +1176,7 @@ public class FeedPage extends LinearLayout {
             else if ("device".equals(id)) body = deviceBody();
             else if ("music".equals(id)) body = musicBody();
             else if ("guard".equals(id)) body = guardBody();
+            else if ("media".equals(id)) body = mediaBody();
             else if ("notifs".equals(id)) body = notifsBody();
             else if ("dns".equals(id)) body = dnsBody();
             else continue;
@@ -2365,6 +2366,160 @@ public class FeedPage extends LinearLayout {
                 App.MAIN.post(new Runnable() { @Override public void run() { col.removeAllViews(); fillGuardWith(col, got); if (got != null) fillGuardStats(col, stats); } });
             }
         });
+    }
+
+    // ------------------------------------------------------------------ GroveMedia stats
+
+    static final String MEDIA = "com.grove.music";
+    private static final Uri MEDIA_STATS = Uri.parse("content://com.grove.music.mediastats/stats");
+
+    /** GroveMedia's simple overall stats: time on music, videos, comics and books for a period, with the top of each. */
+    private View mediaBody() {
+        final LinearLayout col = new LinearLayout(getContext());
+        col.setOrientation(VERTICAL);
+        col.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(View v) { fillMedia(col); }
+            @Override public void onViewDetachedFromWindow(View v) { }
+        });
+        return col;
+    }
+
+    private void fillMedia(final LinearLayout col) {
+        final Context c = getContext();
+        if (!installed(MEDIA)) {
+            col.removeAllViews();
+            col.addView(Ui.text(c, "GroveMedia isn't installed. Install it to see your music, video, comic and book time here.", 13, pal.subtext));
+            return;
+        }
+        final String period = sp.getString("media_period", "month");
+        App.IO.execute(new Runnable() {
+            @Override public void run() {
+                final android.content.ContentValues v = queryRow(MEDIA_STATS, period);
+                App.MAIN.post(new Runnable() { @Override public void run() { col.removeAllViews(); fillMediaWith(col, v, period); } });
+            }
+        });
+    }
+
+    private android.content.ContentValues queryRow(Uri uri, String selection) {
+        android.database.Cursor cur = null;
+        try {
+            cur = getContext().getContentResolver().query(uri, null, selection, null, null);
+            if (cur == null || !cur.moveToFirst()) return null;
+            android.content.ContentValues v = new android.content.ContentValues();
+            android.database.DatabaseUtils.cursorRowToContentValues(cur, v);
+            return v;
+        } catch (Exception e) {
+            return null;
+        } finally { if (cur != null) cur.close(); }
+    }
+
+    private static String hrs(long ms) {
+        long m = ms / 60000;
+        if (m < 60) return m + " min";
+        return (m / 60) + " h " + (m % 60) + " min";
+    }
+
+    private void fillMediaWith(final LinearLayout col, android.content.ContentValues v, String period) {
+        final Context c = getContext();
+        if (v == null) {
+            col.addView(Ui.text(c, "Update GroveMedia to share its stats with Grove Launcher.", 13, pal.subtext));
+            LinearLayout r = buttonRow();
+            addButton(r, "Open GroveMedia", true, new Runnable() { @Override public void run() { openApp(MEDIA); } });
+            col.addView(r);
+            return;
+        }
+        // period chips
+        LinearLayout chips = new LinearLayout(c);
+        String[] ids = {"today", "month", "year", "all"}, names = {"Today", "This month", "This year", "All time"};
+        for (int i = 0; i < ids.length; i++) {
+            final String id = ids[i];
+            boolean on = id.equals(period);
+            TextView ch = Ui.text(c, names[i], 12, on ? pal.accent : pal.subtext);
+            ch.setPadding(Ui.dp(c, 10), Ui.dp(c, 6), Ui.dp(c, 10), Ui.dp(c, 6));
+            ch.setBackground(Ui.pressable(c, on ? Ui.alpha(pal.accent, 0x26) : 0x00000000, Ui.dp(c, 14)));
+            ch.setOnClickListener(new OnClickListener() {
+                @Override public void onClick(View x) { sp.edit().putString("media_period", id).apply(); fillMedia(col); }
+            });
+            chips.addView(ch);
+        }
+        col.addView(chips);
+        long music = val(v, "music_ms"), videos = val(v, "videos_ms"), comics = val(v, "comics_ms"), book = val(v, "book_ms");
+        long total = music + videos + comics + book;
+        // total + split bar
+        LinearLayout head = new LinearLayout(c);
+        head.setOrientation(VERTICAL);
+        head.setPadding(Ui.dp(c, 12), Ui.dp(c, 10), Ui.dp(c, 12), Ui.dp(c, 10));
+        head.setBackground(Ui.round(Ui.alpha(pal.accent, 0x1F), Ui.dp(c, 14)));
+        TextView tt = Ui.text(c, hrs(total), 26, pal.text);
+        tt.setTypeface(Typeface.DEFAULT_BOLD);
+        head.addView(tt);
+        head.addView(Ui.text(c, "total time", 12, pal.subtext));
+        LinearLayout bar = new LinearLayout(c);
+        long[] parts = {music, videos, comics, book};
+        float[] shade = {1f, 0.65f, 0.4f, 0.22f};
+        for (int i = 0; i < 4; i++) if (parts[i] > 0) {
+            View seg = new View(c);
+            seg.setBackgroundColor(Ui.alpha(pal.accent, Math.round(255 * shade[i])));
+            bar.addView(seg, new LinearLayout.LayoutParams(0, -1, parts[i]));
+        }
+        if (total == 0) bar.setBackgroundColor(Ui.alpha(pal.text, 0x14));
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(-1, Ui.dp(c, 6));
+        bl.topMargin = Ui.dp(c, 8);
+        head.addView(bar, bl);
+        LinearLayout.LayoutParams hl = new LinearLayout.LayoutParams(-1, -2);
+        hl.topMargin = Ui.dp(c, 8);
+        col.addView(head, hl);
+        // four tiles
+        String[] labels = {"Music \u00B7 " + val(v, "music_plays") + " plays", "Videos \u00B7 " + val(v, "videos_watched") + " watched",
+                "Comics \u00B7 " + val(v, "comics_chapters") + " chapters", "Books \u00B7 " + val(v, "books") + " books"};
+        for (int r = 0; r < 2; r++) {
+            LinearLayout row = new LinearLayout(c);
+            for (int j = 0; j < 2; j++) {
+                int i = r * 2 + j;
+                LinearLayout t = new LinearLayout(c);
+                t.setOrientation(VERTICAL);
+                t.setPadding(Ui.dp(c, 10), Ui.dp(c, 8), Ui.dp(c, 10), Ui.dp(c, 8));
+                t.setBackground(Ui.round(Ui.alpha(pal.text, 0x0D), Ui.dp(c, 12)));
+                TextView tv = Ui.text(c, hrs(parts[i]), 17, pal.text);
+                t.addView(tv);
+                TextView lb = Ui.text(c, labels[i], 11, pal.subtext);
+                lb.setSingleLine(true);
+                lb.setEllipsize(TextUtils.TruncateAt.END);
+                t.addView(lb);
+                LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(0, -2, 1);
+                if (j == 0) tl.rightMargin = Ui.dp(c, 4); else tl.leftMargin = Ui.dp(c, 4);
+                row.addView(t, tl);
+            }
+            LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, -2);
+            rl.topMargin = Ui.dp(c, 8);
+            col.addView(row, rl);
+        }
+        // top of each
+        String[][] tops = {{"Song", v.getAsString("top_song"), val(v, "top_song_plays") + " plays"},
+                {"Video", v.getAsString("top_video"), hrs(val(v, "top_video_ms"))},
+                {"Comic", v.getAsString("top_comic"), null}, {"Book", v.getAsString("top_book"), null}};
+        boolean any = false;
+        for (String[] t : tops) {
+            if (t[1] == null || t[1].isEmpty()) continue;
+            if (!any) {
+                TextView h = Ui.text(c, "Top", 12, pal.accent);
+                h.setTypeface(Typeface.DEFAULT_BOLD);
+                h.setPadding(0, Ui.dp(c, 10), 0, Ui.dp(c, 2));
+                col.addView(h);
+                any = true;
+            }
+            TextView line = Ui.text(c, t[0] + " \u00B7 " + t[1] + (t[2] != null ? "  (" + t[2] + ")" : ""), 13, pal.text);
+            line.setSingleLine(true);
+            line.setEllipsize(TextUtils.TruncateAt.END);
+            line.setPadding(0, Ui.dp(c, 2), 0, Ui.dp(c, 2));
+            col.addView(line);
+        }
+        if (total == 0) {
+            TextView e = Ui.text(c, "Nothing yet in this period", 13, pal.subtext);
+            e.setPadding(0, Ui.dp(c, 8), 0, 0);
+            col.addView(e);
+        }
+        col.setOnClickListener(new OnClickListener() { @Override public void onClick(View x) { openApp(MEDIA); } });
     }
 
     /** Groveguard 2.3+: what it blocked — DNS lookups today, the 4 busiest block lists, apps cut off from the internet. */
