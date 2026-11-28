@@ -28,6 +28,9 @@ It has no trackers and no ads. It only goes online for web tabs you add to the f
 ### Dock (Microsoft Launcher-style)
 - Swipe the dock up to expand it. You get **quick toggles** (Wi‑Fi, Internet, Bluetooth, torch, auto-rotate, Do Not Disturb, lock, settings), a **brightness slider** and a **second row of apps**.
 
+### What's new in 1.64.0
+- **Groveguard card shows what it blocked** (needs Groveguard 2.3+): DNS lookups blocked today (and out of how many, with the share and the all-time total), the 4 busiest block lists with bars, and the apps the firewall has cut off from the internet. Tap the numbers to open Groveguard on DNS protection, the block lists or the firewall. It updates by itself while the card is on screen.
+
 ### What's new in 1.63.6
 - **Drawer tab change eases in and out**: the list and the pill now start gently and slow down gently over about half a second, instead of leaping most of the way in the first few frames and then creeping into place.
 

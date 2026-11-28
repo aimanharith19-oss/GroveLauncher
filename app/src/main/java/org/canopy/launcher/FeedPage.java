@@ -2299,8 +2299,12 @@ public class FeedPage extends LinearLayout {
         final LinearLayout col = new LinearLayout(c);
         col.setOrientation(VERTICAL);
         final android.database.ContentObserver obs = new android.database.ContentObserver(new android.os.Handler(android.os.Looper.getMainLooper())) {
-            @Override public void onChange(boolean self) { fillGuard(col); }
+            // Groveguard signals at most every ~5 s; rebuild only while the card is on screen
+            @Override public void onChange(boolean self) { if (notifsVisible(col)) fillGuard(col); else col.setTag(R.id.notif_dirty, Boolean.TRUE); }
         };
+        col.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override public void onGlobalLayout() { if (Boolean.TRUE.equals(col.getTag(R.id.notif_dirty)) && notifsVisible(col)) { col.setTag(R.id.notif_dirty, null); fillGuard(col); } }
+        });
         col.addOnAttachStateChangeListener(new OnAttachStateChangeListener() {
             @Override public void onViewAttachedToWindow(View v) {
                 try { c.getContentResolver().registerContentObserver(GUARD_STATUS, true, obs); } catch (Exception ignored) { }
@@ -2314,11 +2318,15 @@ public class FeedPage extends LinearLayout {
         return col;
     }
 
+    private static final Uri GUARD_STATS = Uri.parse("content://org.grove.guard.status/stats");
+
     /** One row of Grove Guard's status, or null if it can't be read. */
-    private android.content.ContentValues guardStatus() {
+    private android.content.ContentValues guardStatus() { return guardQuery(GUARD_STATUS); }
+
+    private android.content.ContentValues guardQuery(Uri uri) {
         android.database.Cursor cur = null;
         try {
-            cur = getContext().getContentResolver().query(GUARD_STATUS, null, null, null, null);
+            cur = getContext().getContentResolver().query(uri, null, null, null, null);
             if (cur == null || !cur.moveToFirst()) return null;
             android.content.ContentValues v = new android.content.ContentValues();
             android.database.DatabaseUtils.cursorRowToContentValues(cur, v);
@@ -2353,9 +2361,102 @@ public class FeedPage extends LinearLayout {
         App.IO.execute(new Runnable() {
             @Override public void run() {
                 final android.content.ContentValues got = guardStatus();
-                App.MAIN.post(new Runnable() { @Override public void run() { col.removeAllViews(); fillGuardWith(col, got); } });
+                final android.content.ContentValues stats = guardQuery(GUARD_STATS);
+                App.MAIN.post(new Runnable() { @Override public void run() { col.removeAllViews(); fillGuardWith(col, got); if (got != null) fillGuardStats(col, stats); } });
             }
         });
+    }
+
+    /** Groveguard 2.3+: what it blocked — DNS lookups today, the 4 busiest block lists, apps cut off from the internet. */
+    private void fillGuardStats(final LinearLayout col, final android.content.ContentValues s) {
+        if (s == null) return; // older Groveguard
+        final Context c = getContext();
+        java.util.Locale L = java.util.Locale.getDefault();
+        int at = Math.max(0, col.getChildCount() - 1); // above the buttons
+        LinearLayout box = new LinearLayout(c);
+        box.setOrientation(VERTICAL);
+        box.setPadding(Ui.dp(c, 12), Ui.dp(c, 10), Ui.dp(c, 12), Ui.dp(c, 10));
+        box.setBackground(Ui.round(Ui.alpha(pal.accent, 0x14), Ui.dp(c, 14)));
+        // DNS
+        long qT = val(s, "dns_queries_today"), bT = val(s, "dns_blocked_today"), bAll = val(s, "dns_blocked_total");
+        Double pct = s.getAsDouble("dns_blocked_pct");
+        boolean dnsOn = on(s, "dns_on");
+        LinearLayout dnsRow = new LinearLayout(c);
+        dnsRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView big = Ui.text(c, String.format(L, "%,d", bT), 24, pal.text);
+        big.setTypeface(Typeface.DEFAULT_BOLD);
+        dnsRow.addView(big);
+        TextView dnsSub = Ui.text(c, dnsOn
+                ? String.format(L, "  blocked today of %,d lookups%s\n  %,d blocked in total", qT, pct == null ? "" : String.format(L, " (%.1f%%)", pct), bAll)
+                : "  DNS filter is off \u2014 tap to turn it on in Groveguard", 12, pal.subtext);
+        dnsRow.addView(dnsSub, new LinearLayout.LayoutParams(0, -2, 1));
+        dnsRow.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { openGuardTab(12); } });
+        box.addView(dnsRow);
+        // top block lists
+        long max = 1;
+        for (int i = 1; i <= 4; i++) max = Math.max(max, Math.max(val(s, "top" + i + "_today"), 1));
+        boolean anyToday = false;
+        for (int i = 1; i <= 4; i++) if (val(s, "top" + i + "_today") > 0) anyToday = true;
+        if (!anyToday) { max = 1; for (int i = 1; i <= 4; i++) max = Math.max(max, val(s, "top" + i + "_total")); }
+        boolean header = false;
+        for (int i = 1; i <= 4; i++) {
+            String name = s.getAsString("top" + i + "_name");
+            if (name == null || name.isEmpty()) continue;
+            if (!header) {
+                TextView h = Ui.text(c, anyToday ? "Top block lists today" : "Top block lists", 12, pal.accent);
+                h.setTypeface(Typeface.DEFAULT_BOLD);
+                h.setPadding(0, Ui.dp(c, 10), 0, Ui.dp(c, 4));
+                box.addView(h);
+                header = true;
+            }
+            long n = anyToday ? val(s, "top" + i + "_today") : val(s, "top" + i + "_total");
+            LinearLayout row = new LinearLayout(c);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            TextView nm = Ui.text(c, name, 13, pal.text);
+            nm.setSingleLine(true);
+            nm.setEllipsize(TextUtils.TruncateAt.END);
+            row.addView(nm, new LinearLayout.LayoutParams(0, -2, 1));
+            row.addView(Ui.text(c, String.format(L, "%,d", n), 13, pal.subtext));
+            box.addView(row);
+            // a bar for the share
+            android.widget.FrameLayout track = new android.widget.FrameLayout(c);
+            track.setBackground(Ui.round(Ui.alpha(pal.text, 0x14), Ui.dp(c, 3)));
+            View fill = new View(c);
+            fill.setBackground(Ui.round(pal.accent, Ui.dp(c, 3)));
+            track.addView(fill, new android.widget.FrameLayout.LayoutParams(-1, -1));
+            final float share = Math.max(0.02f, Math.min(1f, n / (float) max));
+            fill.setPivotX(0);
+            fill.setScaleX(share);
+            LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(-1, Ui.dp(c, 5));
+            tl.topMargin = Ui.dp(c, 3);
+            tl.bottomMargin = Ui.dp(c, 6);
+            box.addView(track, tl);
+            row.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { openGuardTab(16); } });
+        }
+        // blocked apps
+        long apps = val(s, "fw_apps_blocked");
+        String names = s.getAsString("fw_apps");
+        TextView ap = Ui.text(c, apps > 0
+                ? apps + (apps == 1 ? " app" : " apps") + " cut off from the internet" + (names != null && !names.isEmpty() ? ": " + names + (apps > 4 ? "\u2026" : "") : "")
+                : on(s, "fw_on") ? "No apps blocked by the firewall" : "Firewall off", 12, pal.subtext);
+        ap.setPadding(0, Ui.dp(c, 6), 0, 0);
+        ap.setOnClickListener(new OnClickListener() { @Override public void onClick(View v) { openGuardTab(1); } });
+        box.addView(ap);
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(-1, -2);
+        bl.topMargin = Ui.dp(c, 8);
+        col.addView(box, at, bl);
+    }
+
+    private static long val(android.content.ContentValues v, String k) {
+        Long l = v.getAsLong(k);
+        return l == null ? 0 : l;
+    }
+
+    /** Open Groveguard on a tab: 12 DNS protection, 1 firewall, 16 block lists. */
+    private void openGuardTab(int tab) {
+        Intent i = new Intent().setComponent(new android.content.ComponentName(GUARD, GUARD + ".MainActivity"))
+                .putExtra("tab", tab).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        launcher.safeStart(i);
     }
 
     private void fillGuardWith(final LinearLayout col, final android.content.ContentValues st) {
